@@ -1,7 +1,7 @@
 // ===============================
 // CONFIG
 // ===============================
-const API_BASE = "https://YOUR-RENDER-SERVICE.onrender.com"; 
+const API_BASE = "https://arch-repoo.onrender.com"; 
 // ⬆️ replace with your actual Render backend URL
 
 let viz = new Viz();
