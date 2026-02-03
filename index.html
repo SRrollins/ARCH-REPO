@@ -1,6 +1,24 @@
 <!DOCTYPE html>
 <html>
-  <body>
-    <h1>GitHub Pages is working</h1>
-  </body>
+<head>
+  <title>LLM Architecture Recovery</title>
+  <script src="https://unpkg.com/viz.js@2.1.2/viz.js"></script>
+  <script src="https://unpkg.com/viz.js@2.1.2/full.render.js"></script>
+</head>
+<body>
+  <h2>LLM Deployment Architecture Generator</h2>
+
+  <input id="repo" placeholder="GitHub repo URL" size="60"/>
+  <button onclick="run()">Generate</button>
+
+  <p id="status"></p>
+
+  <div id="diagram"></div>
+
+  <br/>
+  <button onclick="downloadPNG()">Download PNG</button>
+  <button onclick="downloadSVG()">Download SVG</button>
+
+  <script src="main.js"></script>
+</body>
 </html>
