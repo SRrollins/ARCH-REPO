@@ -1,57 +1,154 @@
+// ===============================
+// CONFIG
+// ===============================
+const API_BASE = "https://YOUR-RENDER-SERVICE.onrender.com"; 
+// ⬆️ replace with your actual Render backend URL
+
 let viz = new Viz();
 let currentSVG = null;
 
+// ===============================
+// RUN PIPELINE
+// ===============================
 async function run() {
-  const repo = document.getElementById("repo").value;
-  document.getElementById("status").innerText = "Running pipeline...";
-
-  const res = await fetch("/run?repo_url=" + encodeURIComponent(repo), {
-    method: "POST"
-  });
-  const data = await res.json();
-  poll(data.job_id);
-}
-
-async function poll(job) {
-  const s = await fetch(`/status/${job}`).then(r => r.json());
-  if (!s.ready) {
-    setTimeout(() => poll(job), 2000);
+  const repo = document.getElementById("repo").value.trim();
+  if (!repo) {
+    alert("Please enter a repository URL");
     return;
   }
-  document.getElementById("status").innerText = "Rendering diagram...";
-  render(job);
+
+  document.getElementById("status").innerText =
+    "Waking up server (may take ~30 seconds)...";
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/run?repo_url=${encodeURIComponent(repo)}`,
+      { method: "POST" }
+    );
+
+    if (!res.ok) {
+      throw new Error(`Run failed: ${res.status}`);
+    }
+
+    const data = await res.json();
+    poll(data.job_id);
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById("status").innerText =
+      "Failed to connect to backend.";
+  }
 }
 
+// ===============================
+// POLL STATUS
+// ===============================
+async function poll(job) {
+  try {
+    const res = await fetch(`${API_BASE}/status/${job}`);
+    if (!res.ok) throw new Error("Status error");
+
+    const s = await res.json();
+
+    if (!s.ready) {
+      document.getElementById("status").innerText =
+        "Running pipeline...";
+      setTimeout(() => poll(job), 2000);
+      return;
+    }
+
+    document.getElementById("status").innerText =
+      "Rendering diagram...";
+    render(job);
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById("status").innerText =
+      "Waiting for backend...";
+    setTimeout(() => poll(job), 3000);
+  }
+}
+
+// ===============================
+// RENDER DOT → SVG
+// ===============================
 async function render(job) {
-  const dot = await fetch(`/result/${job}/dot`).then(r => r.text());
-  currentSVG = await viz.renderSVGElement(dot);
-  document.getElementById("diagram").innerHTML = "";
-  document.getElementById("diagram").appendChild(currentSVG);
+  try {
+    const dotRes = await fetch(`${API_BASE}/result/${job}/dot`);
+    if (!dotRes.ok) throw new Error("DOT fetch failed");
+
+    const dot = await dotRes.text();
+
+    currentSVG = await viz.renderSVGElement(dot);
+
+    const container = document.getElementById("diagram");
+    container.innerHTML = "";
+    container.appendChild(currentSVG);
+
+    document.getElementById("status").innerText = "Done ✅";
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById("status").innerText =
+      "Graphviz render failed.";
+  }
 }
 
+// ===============================
+// DOWNLOAD SVG
+// ===============================
 function downloadSVG() {
-  const blob = new Blob([currentSVG.outerHTML], {type: "image/svg+xml"});
+  if (!currentSVG) return;
+
+  const blob = new Blob(
+    [currentSVG.outerHTML],
+    { type: "image/svg+xml;charset=utf-8" }
+  );
   save(blob, "architecture.svg");
 }
 
+// ===============================
+// DOWNLOAD PNG (CLIENT-SIDE)
+// ===============================
 function downloadPNG() {
-  const canvas = document.createElement("canvas");
+  if (!currentSVG) return;
+
+  const svgData =
+    new XMLSerializer().serializeToString(currentSVG);
+
+  const svgBlob = new Blob(
+    [svgData],
+    { type: "image/svg+xml;charset=utf-8" }
+  );
+
+  const url = URL.createObjectURL(svgBlob);
   const img = new Image();
-  const svgData = new XMLSerializer().serializeToString(currentSVG);
-  const url = URL.createObjectURL(new Blob([svgData], {type: "image/svg+xml"}));
 
   img.onload = () => {
+    const canvas = document.createElement("canvas");
     canvas.width = img.width;
     canvas.height = img.height;
-    canvas.getContext("2d").drawImage(img, 0, 0);
-    canvas.toBlob(b => save(b, "architecture.png"));
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+
+    canvas.toBlob(blob => {
+      save(blob, "architecture.png");
+      URL.revokeObjectURL(url);
+    });
   };
+
   img.src = url;
 }
 
+// ===============================
+// SAVE FILE
+// ===============================
 function save(blob, name) {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = name;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
 }
