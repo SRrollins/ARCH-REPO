@@ -1,24 +1,88 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>LLM Architecture Recovery</title>
+  <meta charset="UTF-8" />
+  <title>LLM Deployment Architecture Generator</title>
+
+  <!-- Viz.js -->
   <script src="https://unpkg.com/viz.js@2.1.2/viz.js"></script>
   <script src="https://unpkg.com/viz.js@2.1.2/full.render.js"></script>
+
+  <!-- FileSaver (for downloads) -->
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   Roboto, Helvetica, Arial, sans-serif;
+      margin: 30px;
+      background: #fafafa;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    #controls {
+      margin-bottom: 15px;
+    }
+
+    input {
+      width: 600px;
+      padding: 8px;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 8px 12px;
+      font-size: 14px;
+      margin-left: 5px;
+      cursor: pointer;
+    }
+
+    #status {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    #diagram {
+      margin-top: 25px;
+      border: 1px solid #ddd;
+      padding: 15px;
+      background: white;
+      overflow-x: auto;
+    }
+
+    #downloads {
+      margin-top: 15px;
+    }
+  </style>
 </head>
+
 <body>
-  <h2>LLM Deployment Architecture Generator</h2>
 
-  <input id="repo" placeholder="GitHub repo URL" size="60"/>
-  <button onclick="run()">Generate</button>
+  <h1>LLM Deployment Architecture Generator</h1>
 
-  <p id="status"></p>
+  <div id="controls">
+    <input
+      id="repo"
+      type="text"
+      placeholder="https://github.com/GoogleCloudPlatform/microservices-demo"
+    />
+    <button onclick="run()">Generate</button>
+  </div>
+
+  <div id="status">Idle</div>
+
+  <div id="downloads">
+    <button onclick="downloadSVG()">Download SVG</button>
+    <button onclick="downloadPNG()">Download PNG</button>
+  </div>
 
   <div id="diagram"></div>
 
-  <br/>
-  <button onclick="downloadPNG()">Download PNG</button>
-  <button onclick="downloadSVG()">Download SVG</button>
-
+  <!-- Main App Script -->
   <script src="main.js"></script>
+
 </body>
 </html>
