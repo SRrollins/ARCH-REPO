@@ -1,4 +1,4 @@
-const RENDER_URL = "https://YOUR-RENDER-SERVICE.onrender.com";
+const RENDER_URL = "https://arch-repoo.onrender.com";
 
 let currentDot = "";
 
