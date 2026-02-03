@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Architecture Generator</title>
-  <link rel="stylesheet" href="style.css">
+  <title>LLM Architecture Recovery</title>
+  <script src="https://unpkg.com/viz.js@2.1.2/viz.js"></script>
+  <script src="https://unpkg.com/viz.js@2.1.2/full.render.js"></script>
 </head>
 <body>
-  <h1>Architecture Generator</h1>
+  <h2>LLM Deployment Architecture Generator</h2>
 
-  <input id="repo" placeholder="GitHub repo URL">
+  <input id="repo" placeholder="GitHub repo URL" size="60"/>
   <button onclick="run()">Generate</button>
 
-  <pre id="out"></pre>
+  <p id="status"></p>
 
-  <script src="script.js"></script>
+  <div id="diagram"></div>
+
+  <br/>
+  <button onclick="downloadPNG()">Download PNG</button>
+  <button onclick="downloadSVG()">Download SVG</button>
+
+  <script src="main.js"></script>
 </body>
 </html>
