@@ -1,7 +1,10 @@
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse
 import uuid, subprocess, os, json
+from api import router  # wherever your endpoints are
 
+app = FastAPI()
+app.include_router(router)
 app = FastAPI()
 OUTPUT_DIR = "outputs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
