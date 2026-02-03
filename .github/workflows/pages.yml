@@ -2,7 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: ["main"]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,17 +17,14 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # IMPORTANT: tell Pages what folder is the site
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: arch-web-app/frontend
+          path: arch-web-app/frontend   # 🔴 THIS MUST BE EXACT
 
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
