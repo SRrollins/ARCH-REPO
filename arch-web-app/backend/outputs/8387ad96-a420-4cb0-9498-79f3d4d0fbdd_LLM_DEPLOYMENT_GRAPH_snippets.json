@@ -1,0 +1,623 @@
+[
+  {
+    "file": ".github/release-cluster/frontend-ingress.yaml",
+    "kind": "config",
+    "name": "config",
+    "start_line": 1,
+    "end_line": 38,
+    "score_hint": 0.0,
+    "text": "# Copyright 2024 Google LLC\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#      https://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\napiVersion: networking.k8s.io/v1\nkind: Ingress\nmetadata:\n  name: frontend-ingress\n  annotations:\n    kubernetes.io/ingress.global-static-ip-name: online-boutique-ip\n    networking.gke.io/managed-certificates: online-boutique-certificate\n    networking.gke.io/v1beta1.FrontendConfig: frontend-frontend-config\nspec:\n  defaultBackend:\n    service:\n      name: frontend\n      port:\n        number: 80\n  rules:\n  - http:\n      paths:\n      - path: /*\n        pathType: ImplementationSpecific\n        backend:\n          service:\n            name: frontend\n            port:\n              number: 80"
+  },
+  {
+    "file": ".github/release-cluster/frontend-service.yaml",
+    "kind": "config",
+    "name": "config",
+    "start_line": 1,
+    "end_line": 29,
+    "score_hint": 0.0,
+    "text": "# Copyright 2024 Google LLC\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#      https://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\napiVersion: v1\nkind: Service\nmetadata:\n  name: frontend\n  annotations:\n    cloud.google.com/neg: '{\"ingress\": true}'\n    cloud.google.com/backend-config: '{\"default\": \"frontend-backend-config\"}'\nspec:\n  type: ClusterIP\n  selector:\n    app: frontend\n  ports:\n  - name: http\n    port: 80\n    targetPort: 8080"
+  },
+  {
+    "file": ".github/release-cluster/backend-config.yaml",
+    "kind": "config",
+    "name": "config",
+    "start_line": 1,
+    "end_line": 21,
+    "score_hint": 0.0,
+    "text": "# Copyright 2024 Google LLC\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#      https://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\napiVersion: cloud.google.com/v1\nkind: BackendConfig\nmetadata:\n  name: frontend-backend-config\nspec:\n  securityPolicy:\n    name: online-boutique-security-policy"
+  },
+  {
+    "file": ".github/release-cluster/managed-cert.yaml",
+    "kind": "config",
+    "name": "config",
+    "start_line": 1,
+    "end_line": 21,
+    "score_hint": 0.0,
+    "text": "# Copyright 2024 Google LLC\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#      https://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\napiVersion: networking.gke.io/v1\nkind: ManagedCertificate\nmetadata:\n  name: online-boutique-certificate\nspec:\n  domains:\n    - cymbal-shops.retail.cymbal.dev"
+  },
+  {
+    "file": "skaffold.yaml",
+    "kind": "config",
+    "name": "config",
+    "start_line": 1,
+    "end_line": 122,
+    "score_hint": 6.0,
+    "text": "# Copyright 2021 Google LLC\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#      http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\napiVersion: skaffold/v3\nkind: Config\nmetadata:\n  name: app\nbuild:\n  platforms: [\"linux/amd64\", \"linux/arm64\"]\n  artifacts:\n  # image tags are relative; to specify an image repo (e.g. GCR), you\n  # must provide a \"default repo\" using one of the methods described\n  # here:\n  # https://skaffold.dev/docs/concepts/#image-repository-handling\n  - image: emailservice\n    context: src/emailservice\n  - image: productcatalogservice\n    context: src/productcatalogservice\n  - image: recommendationservice\n    context: src/recommendationservice\n  - image: shoppingassistantservice\n    context: src/shoppingassistantservice\n  - image: shippingservice\n    context: src/shippingservice\n  - image: checkoutservice\n    context: src/checkoutservice\n  - image: paymentservice\n    context: src/paymentservice\n  - image: currencyservice\n    context: src/currencyservice\n  - image: cartservice\n    context: src/cartservice/src\n    docker:\n      dockerfile: Dockerfile\n  - image: frontend\n    context: src/frontend\n  - image: adservice\n    context: src/adservice\n  tagPolicy:\n    gitCommit: {}\n  local:\n    useDockerCLI: true\n    useBuildkit: true\nmanifests:\n  kustomize:\n    paths:\n    - kubernetes-manifests\ndeploy:\n  kubectl: {}\n# \"gcb\" profile allows building and pushing the images\n# on Google Container Builder without requiring docker\n# installed on the developer machine. However, note that\n# since GCB does not cache the builds, each build will\n# start from scratch and therefore take a long time.\n#\n# This is not used by default. To use it, run:\n#     skaffold run -p gcb\nprofiles:\n- name: gcb\n  build:\n    googleCloudBuild:\n      diskSizeGb: 300\n      machineType: N1_HIGHCPU_32\n      timeout: 4000s\n# \"debug\" profile replaces the default Dockerfile in cartservice with Dockerfile.debug,\n# which enables debugging via skaffold.\n#\n# This profile is used by default when running skaffold debug.\n- name: debug\n  activation:\n  - command: debug\n  patches:\n  - op: replace\n    path: /build/artifacts/7/docker/dockerfile\n    value: Dockerfile.debug\n# The \"network-policies\" profile is not used by default.\n# You can use it in isolation or in combination with other profiles:\n#     skaffold run -p network-policies, debug\n- name: network-policies\n  patches:\n  - op: add\n    path: /manifests/kustomize/paths/1\n    value: kustomize/components/network-policies\n---\napiVersion: skaffold/v3\nkind: Config\nmetadata:\n  name: loadgenerator\nrequires:\n- configs:\n  - app\nbuild:\n  platforms: [\"linux/amd64\", \"linux/arm64\"]\n  artifacts:\n  - image: loadgenerator\n    context: src/loadgenerator\n  local:\n    useDockerCLI: true\n    useBuildkit: true\nmanifests:\n  rawYaml:\n  - ./kubernetes-manifests/loadgenerator.yaml\ndeploy:\n  kubectl: {}\nprofiles:\n- name: gcb\n  build:\n    googleCloudBuild:\n      diskSizeGb: 300\n      machineType: N1_HIGHCPU_32\n      timeout: 4000s"
+  },
+  {
+    "file": "src/paymentservice/index.js",
+    "kind": "toplevel",
+    "name": "toplevel",
+    "start_line": 1,
+    "end_line": 75,
+    "score_hint": 13.25,
+    "text": "/*\n * Copyright 2018 Google LLC\n *\n * Licensed under the Apache License, Version 2.0 (the \"License\");\n * you may not use this file except in compliance with the License.\n * You may obtain a copy of the License at\n *\n *     https://www.apache.org/licenses/LICENSE-2.0\n *\n * Unless required by applicable law or agreed to in writing, software\n * distributed under the License is distributed on an \"AS IS\" BASIS,\n * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n * See the License for the specific language governing permissions and\n * limitations under the License.\n */\n\n'use strict';\n\nconst logger = require('./logger')\n\nif (process.env.DISABLE_PROFILER) {\n  logger.info(\"Profiler disabled.\")\n} else {\n  logger.info(\"Profiler enabled.\")\n  require('@google-cloud/profiler').start({\n    serviceContext: {\n      service: 'paymentservice',\n      version: '1.0.0'\n    }\n  });\n}\n\n\nif (process.env.ENABLE_TRACING == \"1\") {\n  logger.info(\"Tracing enabled.\")\n\n  const { resourceFromAttributes } = require('@opentelemetry/resources');\n\n  const { ATTR_SERVICE_NAME }= require('@opentelemetry/semantic-conventions');\n\n  const { GrpcInstrumentation } = require('@opentelemetry/instrumentation-grpc');\n  const { registerInstrumentations } = require('@opentelemetry/instrumentation');\n  const opentelemetry = require('@opentelemetry/sdk-node');\n\n  const { OTLPTraceExporter } = require('@opentelemetry/exporter-otlp-grpc');\n\n  const collectorUrl = process.env.COLLECTOR_SERVICE_ADDR;\n  const traceExporter = new OTLPTraceExporter({url: collectorUrl});\n\n  const sdk = new opentelemetry.NodeSDK({\n    resource: resourceFromAttributes({\n      [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME || 'paymentservice',\n    }),\n    traceExporter: traceExporter,\n  });\n\n  registerInstrumentations({\n    instrumentations: [new GrpcInstrumentation()]\n  });\n\n  sdk.start()\n} else {\n  logger.info(\"Tracing disabled.\")\n}\n\n\nconst path = require('path');\nconst HipsterShopServer = require('./server');\n\nconst PORT = process.env['PORT'];\nconst PROTO_PATH = path.join(__dirname, '/proto/');\n\nconst server = new HipsterShopServer(PROTO_PATH, PORT);\n\nserver.listen();"
+  },
+  {
+    "file": "src/paymentservice/server.js",
+    "kind": "class",
+    "name": "HipsterShopServer",
+    "start_line": 23,
+    "end_line": 102,
+    "score_hint": 12.25,
+    "text": "class HipsterShopServer {\n  constructor(protoRoot, port = HipsterShopServer.PORT) {\n    this.port = port;\n\n    this.packages = {\n      hipsterShop: this.loadProto(path.join(protoRoot, 'demo.proto')),\n      health: this.loadProto(path.join(protoRoot, 'grpc/health/v1/health.proto'))\n    };\n\n    this.server = new grpc.Server();\n    this.loadAllProtos(protoRoot);\n  }\n\n  /**\n   * Handler for PaymentService.Charge.\n   * @param {*} call  { ChargeRequest }\n   * @param {*} callback  fn(err, ChargeResponse)\n   */\n  static ChargeServiceHandler(call, callback) {\n    try {\n      logger.info(`PaymentService#Charge invoked with request ${JSON.stringify(call.request)}`);\n      const response = charge(call.request);\n      callback(null, response);\n    } catch (err) {\n      console.warn(err);\n      callback(err);\n    }\n  }\n\n  static CheckHandler(call, callback) {\n    callback(null, { status: 'SERVING' });\n  }\n\n\n  listen() {\n    const server = this.server \n    const port = this.port\n    server.bindAsync(\n      `[::]:${port}`,\n      grpc.ServerCredentials.createInsecure(),\n      function () {\n        logger.info(`PaymentService gRPC server started on port ${port}`);\n        server.start();\n      }\n    );\n  }\n\n  loadProto(path) {\n    const packageDefinition = protoLoader.loadSync(\n      path,\n      {\n        keepCase: true,\n        longs: String,\n        enums: String,\n        defaults: true,\n        oneofs: true\n      }\n    );\n    return grpc.loadPackageDefinition(packageDefinition);\n  }\n\n  loadAllProtos(protoRoot) {\n    const hipsterShopPackage = this.packages.hipsterShop.hipstershop;\n    const healthPackage = this.packages.health.grpc.health.v1;\n\n    this.server.addService(\n      hipsterShopPackage.PaymentService.service,\n      {\n        charge: HipsterShopServer.ChargeServiceHandler.bind(this)\n      }\n    );\n\n    this.server.addService(\n      healthPackage.Health.service,\n      {\n        check: HipsterShopServer.CheckHandler.bind(this)\n      }\n    );\n  }\n}"
+  },
+  {
+    "file": "src/checkoutservice/main.go",
+    "kind": "func",
+    "name": "main",
+    "start_line": 88,
+    "end_line": 148,
+    "score_hint": 11.25,
+    "text": "func main() {\n\tctx := context.Background()\n\tif os.Getenv(\"ENABLE_TRACING\") == \"1\" {\n\t\tlog.Info(\"Tracing enabled.\")\n\t\tinitTracing()\n\n\t} else {\n\t\tlog.Info(\"Tracing disabled.\")\n\t}\n\n\tif os.Getenv(\"ENABLE_PROFILER\") == \"1\" {\n\t\tlog.Info(\"Profiling enabled.\")\n\t\tgo initProfiling(\"checkoutservice\", \"1.0.0\")\n\t} else {\n\t\tlog.Info(\"Profiling disabled.\")\n\t}\n\n\tport := listenPort\n\tif os.Getenv(\"PORT\") != \"\" {\n\t\tport = os.Getenv(\"PORT\")\n\t}\n\n\tsvc := new(checkoutService)\n\tmustMapEnv(&svc.shippingSvcAddr, \"SHIPPING_SERVICE_ADDR\")\n\tmustMapEnv(&svc.productCatalogSvcAddr, \"PRODUCT_CATALOG_SERVICE_ADDR\")\n\tmustMapEnv(&svc.cartSvcAddr, \"CART_SERVICE_ADDR\")\n\tmustMapEnv(&svc.currencySvcAddr, \"CURRENCY_SERVICE_ADDR\")\n\tmustMapEnv(&svc.emailSvcAddr, \"EMAIL_SERVICE_ADDR\")\n\tmustMapEnv(&svc.paymentSvcAddr, \"PAYMENT_SERVICE_ADDR\")\n\n\tmustConnGRPC(ctx, &svc.shippingSvcConn, svc.shippingSvcAddr)\n\tmustConnGRPC(ctx, &svc.productCatalogSvcConn, svc.productCatalogSvcAddr)\n\tmustConnGRPC(ctx, &svc.cartSvcConn, svc.cartSvcAddr)\n\tmustConnGRPC(ctx, &svc.currencySvcConn, svc.currencySvcAddr)\n\tmustConnGRPC(ctx, &svc.emailSvcConn, svc.emailSvcAddr)\n\tmustConnGRPC(ctx, &svc.paymentSvcConn, svc.paymentSvcAddr)\n\n\tlog.Infof(\"service config: %+v\", svc)\n\n\tlis, err := net.Listen(\"tcp\", fmt.Sprintf(\":%s\", port))\n\tif err != nil {\n\t\tlog.Fatal(err)\n\t}\n\n\tvar srv *grpc.Server\n\n\t// Propagate trace context always\n\totel.SetTextMapPropagator(\n\t\tpropagation.NewCompositeTextMapPropagator(\n\t\t\tpropagation.TraceContext{}, propagation.Baggage{}))\n\tsrv = grpc.NewServer(\n\t\tgrpc.StatsHandler(otelgrpc.NewServerHandler()),\n\t)\n\n\tpb.RegisterCheckoutServiceServer(srv, svc)\n\thealthcheck := health.NewServer()\n\thealthpb.RegisterHealthServer(srv, healthcheck)\n\tlog.Infof(\"starting to listen on tcp: %q\", lis.Addr().String())\n\terr = srv.Serve(lis)\n\tlog.Fatal(err)\n}"
+  },
+  {
+    "file": "src/frontend/main.go",
+    "kind": "func",
+    "name": "main",
+    "start_line": 91,
+    "end_line": 172,
+    "score_hint": 11.25,
+    "text": "func main() {\n\tctx := context.Background()\n\tlog := logrus.New()\n\tlog.Level = logrus.DebugLevel\n\tlog.Formatter = &logrus.JSONFormatter{\n\t\tFieldMap: logrus.FieldMap{\n\t\t\tlogrus.FieldKeyTime:  \"timestamp\",\n\t\t\tlogrus.FieldKeyLevel: \"severity\",\n\t\t\tlogrus.FieldKeyMsg:   \"message\",\n\t\t},\n\t\tTimestampFormat: time.RFC3339Nano,\n\t}\n\tlog.Out = os.Stdout\n\n\tsvc := new(frontendServer)\n\n\totel.SetTextMapPropagator(\n\t\tpropagation.NewCompositeTextMapPropagator(\n\t\t\tpropagation.TraceContext{}, propagation.Baggage{}))\n\n\tbaseUrl = os.Getenv(\"BASE_URL\")\n\n\tif os.Getenv(\"ENABLE_TRACING\") == \"1\" {\n\t\tlog.Info(\"Tracing enabled.\")\n\t\tinitTracing(log, ctx, svc)\n\t} else {\n\t\tlog.Info(\"Tracing disabled.\")\n\t}\n\n\tif os.Getenv(\"ENABLE_PROFILER\") == \"1\" {\n\t\tlog.Info(\"Profiling enabled.\")\n\t\tgo initProfiling(log, \"frontend\", \"1.0.0\")\n\t} else {\n\t\tlog.Info(\"Profiling disabled.\")\n\t}\n\n\tsrvPort := port\n\tif os.Getenv(\"PORT\") != \"\" {\n\t\tsrvPort = os.Getenv(\"PORT\")\n\t}\n\taddr := os.Getenv(\"LISTEN_ADDR\")\n\tmustMapEnv(&svc.productCatalogSvcAddr, \"PRODUCT_CATALOG_SERVICE_ADDR\")\n\tmustMapEnv(&svc.currencySvcAddr, \"CURRENCY_SERVICE_ADDR\")\n\tmustMapEnv(&svc.cartSvcAddr, \"CART_SERVICE_ADDR\")\n\tmustMapEnv(&svc.recommendationSvcAddr, \"RECOMMENDATION_SERVICE_ADDR\")\n\tmustMapEnv(&svc.checkoutSvcAddr, \"CHECKOUT_SERVICE_ADDR\")\n\tmustMapEnv(&svc.shippingSvcAddr, \"SHIPPING_SERVICE_ADDR\")\n\tmustMapEnv(&svc.adSvcAddr, \"AD_SERVICE_ADDR\")\n\tmustMapEnv(&svc.shoppingAssistantSvcAddr, \"SHOPPING_ASSISTANT_SERVICE_ADDR\")\n\n\tmustConnGRPC(ctx, &svc.currencySvcConn, svc.currencySvcAddr)\n\tmustConnGRPC(ctx, &svc.productCatalogSvcConn, svc.productCatalogSvcAddr)\n\tmustConnGRPC(ctx, &svc.cartSvcConn, svc.cartSvcAddr)\n\tmustConnGRPC(ctx, &svc.recommendationSvcConn, svc.recommendationSvcAddr)\n\tmustConnGRPC(ctx, &svc.shippingSvcConn, svc.shippingSvcAddr)\n\tmustConnGRPC(ctx, &svc.checkoutSvcConn, svc.checkoutSvcAddr)\n\tmustConnGRPC(ctx, &svc.adSvcConn, svc.adSvcAddr)\n\n\tr := mux.NewRouter()\n\tr.HandleFunc(baseUrl+\"/\", svc.homeHandler).Methods(http.MethodGet, http.MethodHead)\n\tr.HandleFunc(baseUrl+\"/product/{id}\", svc.productHandler).Methods(http.MethodGet, http.MethodHead)\n\tr.HandleFunc(baseUrl+\"/cart\", svc.viewCartHandler).Methods(http.MethodGet, http.MethodHead)\n\tr.HandleFunc(baseUrl+\"/cart\", svc.addToCartHandler).Methods(http.MethodPost)\n\tr.HandleFunc(baseUrl+\"/cart/empty\", svc.emptyCartHandler).Methods(http.MethodPost)\n\tr.HandleFunc(baseUrl+\"/setCurrency\", svc.setCurrencyHandler).Methods(http.MethodPost)\n\tr.HandleFunc(baseUrl+\"/logout\", svc.logoutHandler).Methods(http.MethodGet)\n\tr.HandleFunc(baseUrl+\"/cart/checkout\", svc.placeOrderHandler).Methods(http.MethodPost)\n\tr.HandleFunc(baseUrl+\"/assistant\", svc.assistantHandler).Methods(http.MethodGet)\n\tr.PathPrefix(baseUrl + \"/static/\").Handler(http.StripPrefix(baseUrl+\"/static/\", http.FileServer(http.Dir(\"./static/\"))))\n\tr.HandleFunc(baseUrl+\"/robots.txt\", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprint(w, \"User-agent: *\\nDisallow: /\") })\n\tr.HandleFunc(baseUrl+\"/_healthz\", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprint(w, \"ok\") })\n\tr.HandleFunc(baseUrl+\"/product-meta/{ids}\", svc.getProductByID).Methods(http.MethodGet)\n\tr.HandleFunc(baseUrl+\"/bot\", svc.chatBotHandler).Methods(http.MethodPost)\n\n\tvar handler http.Handler = r\n\thandler = &logHandler{log: log, next: handler}     // add logging\n\thandler = ensureSessionID(handler)                 // add session ID\n\thandler = otelhttp.NewHandler(handler, \"frontend\") // add OTel tracing\n\n\tlog.Infof(\"starting server on %s:%s\", addr, srvPort)\n\tlog.Fatal(http.ListenAndServe(addr+\":\"+srvPort, handler))\n}"
+  },
+  {
+    "file": "src/productcatalogservice/server.go",
+    "kind": "func",
+    "name": "initStats",
+    "start_line": 151,
+    "end_line": 153,
+    "score_hint": 11.25,
+    "text": "func initStats() {\n\t// TODO(drewbr) Implement OpenTelemetry stats\n}"
+  },
+  {
+    "file": "src/productcatalogservice/server.go",
+    "kind": "func",
+    "name": "initTracing",
+    "start_line": 155,
+    "end_line": 177,
+    "score_hint": 11.25,
+    "text": "func initTracing() error {\n\tvar (\n\t\tcollectorAddr string\n\t\tcollectorConn *grpc.ClientConn\n\t)\n\n\tctx := context.Background()\n\n\tmustMapEnv(&collectorAddr, \"COLLECTOR_SERVICE_ADDR\")\n\tmustConnGRPC(ctx, &collectorConn, collectorAddr)\n\n\texporter, err := otlptracegrpc.New(\n\t\tctx,\n\t\totlptracegrpc.WithGRPCConn(collectorConn))\n\tif err != nil {\n\t\tlog.Warnf(\"warn: Failed to create trace exporter: %v\", err)\n\t}\n\ttp := sdktrace.NewTracerProvider(\n\t\tsdktrace.WithBatcher(exporter),\n\t\tsdktrace.WithSampler(sdktrace.AlwaysSample()))\n\totel.SetTracerProvider(tp)\n\treturn err\n}"
+  },
+  {
+    "file": "src/productcatalogservice/server.go",
+    "kind": "func",
+    "name": "initProfiling",
+    "start_line": 179,
+    "end_line": 197,
+    "score_hint": 11.25,
+    "text": "func initProfiling(service, version string) {\n\tfor i := 1; i <= 3; i++ {\n\t\tif err := profiler.Start(profiler.Config{\n\t\t\tService:        service,\n\t\t\tServiceVersion: version,\n\t\t\t// ProjectID must be set if not running on GCP.\n\t\t\t// ProjectID: \"my-project\",\n\t\t}); err != nil {\n\t\t\tlog.Warnf(\"failed to start profiler: %+v\", err)\n\t\t} else {\n\t\t\tlog.Info(\"started Stackdriver profiler\")\n\t\t\treturn\n\t\t}\n\t\td := time.Second * 10 * time.Duration(i)\n\t\tlog.Infof(\"sleeping %v to retry initializing Stackdriver profiler\", d)\n\t\ttime.Sleep(d)\n\t}\n\tlog.Warn(\"could not initialize Stackdriver profiler after retrying, giving up\")\n}"
+  },
+  {
+    "file": "src/shippingservice/main.go",
+    "kind": "func",
+    "name": "init",
+    "start_line": 42,
+    "end_line": 54,
+    "score_hint": 11.25,
+    "text": "func init() {\n\tlog = logrus.New()\n\tlog.Level = logrus.DebugLevel\n\tlog.Formatter = &logrus.JSONFormatter{\n\t\tFieldMap: logrus.FieldMap{\n\t\t\tlogrus.FieldKeyTime:  \"timestamp\",\n\t\t\tlogrus.FieldKeyLevel: \"severity\",\n\t\t\tlogrus.FieldKeyMsg:   \"message\",\n\t\t},\n\t\tTimestampFormat: time.RFC3339Nano,\n\t}\n\tlog.Out = os.Stdout\n}"
+  },
+  {
+    "file": "src/shippingservice/main.go",
+    "kind": "func",
+    "name": "main",
+    "start_line": 56,
+    "end_line": 102,
+    "score_hint": 11.25,
+    "text": "func main() {\n\tif os.Getenv(\"DISABLE_TRACING\") == \"\" {\n\t\tlog.Info(\"Tracing enabled, but temporarily unavailable\")\n\t\tlog.Info(\"See https://github.com/GoogleCloudPlatform/microservices-demo/issues/422 for more info.\")\n\t\tgo initTracing()\n\t} else {\n\t\tlog.Info(\"Tracing disabled.\")\n\t}\n\n\tif os.Getenv(\"DISABLE_PROFILER\") == \"\" {\n\t\tlog.Info(\"Profiling enabled.\")\n\t\tgo initProfiling(\"shippingservice\", \"1.0.0\")\n\t} else {\n\t\tlog.Info(\"Profiling disabled.\")\n\t}\n\n\tport := defaultPort\n\tif value, ok := os.LookupEnv(\"PORT\"); ok {\n\t\tport = value\n\t}\n\tport = fmt.Sprintf(\":%s\", port)\n\n\tlis, err := net.Listen(\"tcp\", port)\n\tif err != nil {\n\t\tlog.Fatalf(\"failed to listen: %v\", err)\n\t}\n\n\tvar srv *grpc.Server\n\tif os.Getenv(\"DISABLE_STATS\") == \"\" {\n\t\tlog.Info(\"Stats enabled, but temporarily unavailable\")\n\t\tsrv = grpc.NewServer()\n\t} else {\n\t\tlog.Info(\"Stats disabled.\")\n\t\tsrv = grpc.NewServer()\n\t}\n\tsvc := &server{}\n\tpb.RegisterShippingServiceServer(srv, svc)\n\thealthcheck := health.NewServer()\n\thealthpb.RegisterHealthServer(srv, healthcheck)\n\tlog.Infof(\"Shipping Service listening on port %s\", port)\n\n\t// Register reflection service on gRPC server.\n\treflection.Register(srv)\n\tif err := srv.Serve(lis); err != nil {\n\t\tlog.Fatalf(\"failed to serve: %v\", err)\n\t}\n}"
+  },
+  {
+    "file": "src/adservice/Dockerfile",
+    "kind": "config",
+    "name": "config",
+    "start_line": 1,
+    "end_line": 41,
+    "score_hint": 9.0,
+    "text": "# Copyright 2020 Google LLC\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#      http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\nFROM --platform=$BUILDPLATFORM eclipse-temurin:24.0.2_12-jdk-noble@sha256:dacac8e9a0df0d2bd24e702b4431132875c249930b70555ebd7ca285b5bee684 AS builder\n\nWORKDIR /app\n\nCOPY [\"build.gradle\", \"gradlew\", \"./\"]\nCOPY gradle gradle\nRUN chmod +x gradlew\nRUN ./gradlew downloadRepos\n\nCOPY . .\nRUN chmod +x gradlew\nRUN ./gradlew installDist\n\nFROM eclipse-temurin:25.0.1_8-jre-alpine@sha256:b51543f89580c1ba70e441cfbc0cfc1635c3c16d2e2d77fec9d890342a3a8687\n\n# @TODO: https://github.com/GoogleCloudPlatform/microservices-demo/issues/2517\n# Download Stackdriver Profiler Java agent\n# RUN mkdir -p /opt/cprof && \\\n#     wget -q -O- https://storage.googleapis.com/cloud-profiler/java/latest/profiler_java_agent_alpine.tar.gz \\\n#     | tar xzv -C /opt/cprof && \\\n#     rm -rf profiler_java_agent.tar.gz\n\nWORKDIR /app\nCOPY --from=builder /app .\n\nEXPOSE 9555\nENTRYPOINT [\"/app/build/install/hipstershop/bin/AdService\"]"
+  },
+  {
+    "file": "src/checkoutservice/Dockerfile",
+    "kind": "config",
+    "name": "config",
+    "start_line": 1,
+    "end_line": 41,
+    "score_hint": 9.0,
+    "text": "# Copyright 2020 Google LLC\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#      http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\nFROM --platform=$BUILDPLATFORM golang:1.25.6-alpine@sha256:d9b2e14101f27ec8d09674cd01186798d227bb0daec90e032aeb1cd22ac0f029 AS builder\nARG TARGETOS\nARG TARGETARCH\nWORKDIR /src\n\n# restore dependencies\nCOPY go.mod go.sum ./\nRUN go mod download\n\nCOPY . .\n\n# Skaffold passes in debug-oriented compiler flags\nARG SKAFFOLD_GO_GCFLAGS\nRUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -ldflags=\"-s -w\" -gcflags=\"${SKAFFOLD_GO_GCFLAGS}\" -o /checkoutservice .\n\nFROM gcr.io/distroless/static\n\nWORKDIR /src\nCOPY --from=builder /checkoutservice /src/checkoutservice\n\n# Definition of this variable is used by 'skaffold debug' to identify a golang binary.\n# Default behavior - a failure prints a stack trace for the current goroutine.\n# See https://golang.org/pkg/runtime/\nENV GOTRACEBACK=single\n\nEXPOSE 5050\nENTRYPOINT [\"/src/checkoutservice\"]"
+  },
+  {
+    "file": "src/currencyservice/Dockerfile",
+    "kind": "config",
+    "name": "config",
+    "start_line": 1,
+    "end_line": 42,
+    "score_hint": 9.0,
+    "text": "# Copyright 2020 Google LLC\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#      http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\nFROM --platform=$BUILDPLATFORM node:20.20.0-alpine@sha256:3960ed74dfe320a67bf8da9555b6bade25ebda2b22b6081d2f60fd7d5d430e9c AS builder\n\n# Some packages (e.g. @google-cloud/profiler) require additional\n# deps for post-install scripts\nRUN apk add --update --no-cache \\\n    python3 \\\n    make \\\n    g++\n\nWORKDIR /usr/src/app\n\nCOPY package*.json ./\n\nRUN npm install --only=production\n\nFROM alpine:3.23.2@sha256:865b95f46d98cf867a156fe4a135ad3fe50d2056aa3f25ed31662dff6da4eb62\n\nRUN apk add --no-cache nodejs\n\nWORKDIR /usr/src/app\n\nCOPY --from=builder /usr/src/app/node_modules ./node_modules\n\nCOPY . .\n\nEXPOSE 7000\n\nENTRYPOINT [ \"node\", \"server.js\" ]"
+  },
+  {
+    "file": "src/loadgenerator/Dockerfile",
+    "kind": "config",
+    "name": "config",
+    "start_line": 1,
+    "end_line": 49,
+    "score_hint": 9.0,
+    "text": "# Copyright 2020 Google LLC\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#      http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\nFROM --platform=$BUILDPLATFORM python:3.14.2-alpine@sha256:7af51ebeb83610fb69d633d5c61a2efb87efa4caf66b59862d624bb6ef788345 AS base\n\nFROM base AS builder\n\nENV PYTHONDONTWRITEBYTECODE=1\nENV PYTHONUNBUFFERED=1\n\nRUN apk update \\\n    && apk add --no-cache g++ linux-headers \\\n    && rm -rf /var/cache/apk/*\n\nCOPY requirements.txt .\n\nRUN pip install --prefix=\"/install\" -r requirements.txt\n\nFROM base\n\nENV PYTHONDONTWRITEBYTECODE=1\nENV PYTHONUNBUFFERED=1\n\nRUN apk update \\\n    && apk add --no-cache libstdc++ \\\n    && rm -rf /var/cache/apk/*\n\nWORKDIR /loadgen\n\nCOPY --from=builder /install /usr/local\n\n# Add application code.\nCOPY locustfile.py .\n\n# enable gevent support in debugger\nENV GEVENT_SUPPORT=True\n\nENTRYPOINT locust --host=\"http://${FRONTEND_ADDR}\" --headless -u \"${USERS:-10}\" -r \"${RATE:-1}\" 2>&1"
+  },
+  {
+    "file": "src/paymentservice/Dockerfile",
+    "kind": "config",
+    "name": "config",
+    "start_line": 1,
+    "end_line": 42,
+    "score_hint": 9.0,
+    "text": "# Copyright 2020 Google LLC\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#      http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\nFROM --platform=$BUILDPLATFORM node:20.20.0-alpine@sha256:3960ed74dfe320a67bf8da9555b6bade25ebda2b22b6081d2f60fd7d5d430e9c AS builder\n\n# Some packages (e.g. @google-cloud/profiler) require additional\n# deps for post-install scripts\nRUN apk add --update --no-cache \\\n    python3 \\\n    make \\\n    g++\n\nWORKDIR /usr/src/app\n\nCOPY package*.json ./\n\nRUN npm install --only=production\n\nFROM alpine:3.23.2@sha256:865b95f46d98cf867a156fe4a135ad3fe50d2056aa3f25ed31662dff6da4eb62\n\nRUN apk add --no-cache nodejs\n\nWORKDIR /usr/src/app\n\nCOPY --from=builder /usr/src/app/node_modules ./node_modules\n\nCOPY . .\n\nEXPOSE 50051\n\nENTRYPOINT [ \"node\", \"index.js\" ]"
+  },
+  {
+    "file": "src/recommendationservice/Dockerfile",
+    "kind": "config",
+    "name": "config",
+    "start_line": 1,
+    "end_line": 52,
+    "score_hint": 9.0,
+    "text": "# Copyright 2020 Google LLC\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#      http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\nFROM --platform=$BUILDPLATFORM python:3.14.2-alpine@sha256:7af51ebeb83610fb69d633d5c61a2efb87efa4caf66b59862d624bb6ef788345 AS base\n\nFROM base AS builder\n\nENV PYTHONDONTWRITEBYTECODE=1\nENV PYTHONUNBUFFERED=1\n\nRUN apk update \\\n    && apk add --no-cache g++ linux-headers \\\n    && rm -rf /var/cache/apk/*\n\n# get packages\nCOPY requirements.txt .\nRUN pip install -r requirements.txt\n\nFROM base\n\nENV PYTHONDONTWRITEBYTECODE=1\nENV PYTHONUNBUFFERED=1\n\nRUN apk update \\\n    && apk add --no-cache libstdc++ \\\n    && rm -rf /var/cache/apk/*\n\n# get packages\nWORKDIR /recommendationservice\n\n# Grab packages from builder\nCOPY --from=builder /usr/local/lib/python3.14/ /usr/local/lib/python3.14/\n\n# Add the application\nCOPY . .\n\n# set listen port\nENV PORT=\"8080\"\nEXPOSE 8080\n\nENTRYPOINT [\"python\", \"recommendation_server.py\"]"
+  },
+  {
+    "file": "src/shippingservice/Dockerfile",
+    "kind": "config",
+    "name": "config",
+    "start_line": 1,
+    "end_line": 41,
+    "score_hint": 9.0,
+    "text": "# Copyright 2020 Google LLC\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#      http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\nFROM --platform=$BUILDPLATFORM golang:1.25.6-alpine@sha256:d9b2e14101f27ec8d09674cd01186798d227bb0daec90e032aeb1cd22ac0f029 AS builder\nARG TARGETOS\nARG TARGETARCH\nWORKDIR /src\n\n# restore dependencies\nCOPY go.mod go.sum ./\nRUN go mod download\nCOPY . .\n\n# Skaffold passes in debug-oriented compiler flags\nARG SKAFFOLD_GO_GCFLAGS\nRUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -ldflags=\"-s -w\" -gcflags=\"${SKAFFOLD_GO_GCFLAGS}\" -o /go/bin/shippingservice .\n\nFROM gcr.io/distroless/static\n\nWORKDIR /src\nCOPY --from=builder /go/bin/shippingservice /src/shippingservice\nENV APP_PORT=50051\n\n# Definition of this variable is used by 'skaffold debug' to identify a golang binary.\n# Default behavior - a failure prints a stack trace for the current goroutine.\n# See https://golang.org/pkg/runtime/\nENV GOTRACEBACK=single\n\nEXPOSE 50051\nENTRYPOINT [\"/src/shippingservice\"]"
+  },
+  {
+    "file": "src/shoppingassistantservice/Dockerfile",
+    "kind": "config",
+    "name": "config",
+    "start_line": 1,
+    "end_line": 44,
+    "score_hint": 9.0,
+    "text": "# Copyright 2024 Google LLC\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#      https://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\nFROM --platform=$BUILDPLATFORM python:3.14.2-slim@sha256:9b81fe9acff79e61affb44aaf3b6ff234392e8ca477cb86c9f7fd11732ce9b6a AS base\n\nFROM base AS builder\n\nRUN apt-get -qq update \\\n    && apt-get install -y --no-install-recommends g++ \\\n    && rm -rf /var/lib/apt/lists/*\n\n# get packages\nCOPY requirements.txt .\nRUN pip install -r requirements.txt\n\nFROM base\n# Enable unbuffered logging\nENV PYTHONUNBUFFERED=1\n\n# get packages\nWORKDIR /shoppingassistantservice\n\n# Grab packages from builder\nCOPY --from=builder /usr/local/lib/python3.14/ /usr/local/lib/python3.14/\n\n# Add the application\nCOPY . .\n\n# set listen port\nENV PORT \"8080\"\nEXPOSE 8080\n\nENTRYPOINT [\"python\", \"shoppingassistantservice.py\"]"
+  },
+  {
+    "file": "src/adservice/src/main/java/hipstershop/AdService.java",
+    "kind": "class",
+    "name": "AdService",
+    "start_line": 41,
+    "end_line": 238,
+    "score_hint": 8.0,
+    "text": "public final class AdService {\n\n  private static final Logger logger = LogManager.getLogger(AdService.class);\n\n  @SuppressWarnings(\"FieldCanBeLocal\")\n  private static int MAX_ADS_TO_SERVE = 2;\n\n  private Server server;\n  private HealthStatusManager healthMgr;\n\n  private static final AdService service = new AdService();\n\n  private void start() throws IOException {\n    int port = Integer.parseInt(System.getenv().getOrDefault(\"PORT\", \"9555\"));\n    healthMgr = new HealthStatusManager();\n\n    server =\n        ServerBuilder.forPort(port)\n            .addService(new AdServiceImpl())\n            .addService(healthMgr.getHealthService())\n            .build()\n            .start();\n    logger.info(\"Ad Service started, listening on \" + port);\n    Runtime.getRuntime()\n        .addShutdownHook(\n            new Thread(\n                () -> {\n                  // Use stderr here since the logger may have been reset by its JVM shutdown hook.\n                  System.err.println(\n                      \"*** shutting down gRPC ads server since JVM is shutting down\");\n                  AdService.this.stop();\n                  System.err.println(\"*** server shut down\");\n                }));\n    healthMgr.setStatus(\"\", ServingStatus.SERVING);\n  }\n\n  private void stop() {\n    if (server != null) {\n      healthMgr.clearStatus(\"\");\n      server.shutdown();\n    }\n  }\n\n  private static class AdServiceImpl extends hipstershop.AdServiceGrpc.AdServiceImplBase {\n\n    /**\n     * Retrieves ads based on context provided in the request {@code AdRequest}.\n     *\n     * @param req the request containing context.\n     * @param responseObserver the stream observer which gets notified with the value of {@code\n     *     AdResponse}\n     */\n    @Override\n    public void getAds(AdRequest req, StreamObserver<AdResponse> responseObserver) {\n      AdService service = AdService.getInstance();\n      try {\n        List<Ad> allAds = new ArrayList<>();\n        logger.info(\"received ad request (context_words=\" + req.getContextKeysList() + \")\");\n        if (req.getContextKeysCount() > 0) {\n          for (int i = 0; i < req.getContextKeysCount(); i++) {\n            Collection<Ad> ads = service.getAdsByCategory(req.getContextKeys(i));\n            allAds.addAll(ads);\n          }\n        } else {\n          allAds = service.getRandomAds();\n        }\n        if (allAds.isEmpty()) {\n          // Serve random ads.\n          allAds = service.getRandomAds();\n        }\n        AdResponse reply = AdResponse.newBuilder().addAllAds(allAds).build();\n        responseObserver.onNext(reply);\n        responseObserver.onCompleted();\n      } catch (StatusRuntimeException e) {\n        logger.log(Level.WARN, \"GetAds Failed with status {}\", e.getStatus());\n        responseObserver.onError(e);\n      }\n    }\n  }\n\n  private static final ImmutableListMultimap<String, Ad> adsMap = createAdsMap();\n\n  private Collection<Ad> getAdsByCategory(String category) {\n    return adsMap.get(category);\n  }\n\n  private static final Random random = new Random();\n\n  private List<Ad> getRandomAds() {\n    List<Ad> ads = new ArrayList<>(MAX_ADS_TO_SERVE);\n    Collection<Ad> allAds = adsMap.values();\n    for (int i = 0; i < MAX_ADS_TO_SERVE; i++) {\n      ads.add(Iterables.get(allAds, random.nextInt(allAds.size())));\n    }\n    return ads;\n  }\n\n  private static AdService getInstance() {\n    return service;\n  }\n\n  /** Await termination on the main thread since the grpc library uses daemon threads. */\n  private void blockUntilShutdown() throws InterruptedException {\n    if (server != null) {\n      server.awaitTermination();\n    }\n  }\n\n  private static ImmutableListMultimap<String, Ad> createAdsMap() {\n    Ad hairdryer =\n        Ad.newBuilder()\n            .setRedirectUrl(\"/product/2ZYFJ3GM2N\")\n            .setText(\"Hairdryer for sale. 50% off.\")\n            .build();\n    Ad tankTop =\n        Ad.newBuilder()\n            .setRedirectUrl(\"/product/66VCHSJNUP\")\n            .setText(\"Tank top for sale. 20% off.\")\n            .build();\n    Ad candleHolder =\n        Ad.newBuilder()\n            .setRedirectUrl(\"/product/0PUK6V6EV0\")\n            .setText(\"Candle holder for sale. 30% off.\")\n            .build();\n    Ad bambooGlassJar =\n        Ad.newBuilder()\n            .setRedirectUrl(\"/product/9SIQT8TOJO\")\n            .setText(\"Bamboo glass jar for sale. 10% off.\")\n            .build();\n    Ad watch =\n        Ad.newBuilder()\n            .setRedirectUrl(\"/product/1YMWWN1N4O\")\n            .setText(\"Watch for sale. Buy one, get second kit for free\")\n            .build();\n    Ad mug =\n        Ad.newBuilder()\n            .setRedirectUrl(\"/product/6E92ZMYYFZ\")\n            .setText(\"Mug for sale. Buy two, get third one for free\")\n            .build();\n    Ad loafers =\n        Ad.newBuilder()\n            .setRedirectUrl(\"/product/L9ECAV7KIM\")\n            .setText(\"Loafers for sale. Buy one, get second one for free\")\n            .build();\n    return ImmutableListMultimap.<String, Ad>builder()\n        .putAll(\"clothing\", tankTop)\n        .putAll(\"accessories\", watch)\n        .putAll(\"footwear\", loafers)\n        .putAll(\"hair\", hairdryer)\n        .putAll(\"decor\", candleHolder)\n        .putAll(\"kitchen\", bambooGlassJar, mug)\n        .build();\n  }\n\n  private static void initStats() {\n    if (System.getenv(\"DISABLE_STATS\") != null) {\n      logger.info(\"Stats disabled.\");\n      return;\n    }\n    logger.info(\"Stats enabled, but temporarily unavailable\");\n\n    long sleepTime = 10; /* seconds */\n    int maxAttempts = 5;\n\n    // TODO(arbrown) Implement OpenTelemetry stats\n\n  }\n\n  private static void initTracing() {\n    if (System.getenv(\"DISABLE_TRACING\") != null) {\n      logger.info(\"Tracing disabled.\");\n      return;\n    }\n    logger.info(\"Tracing enabled but temporarily unavailable\");\n    logger.info(\"See https://github.com/GoogleCloudPlatform/microservices-demo/issues/422 for more info.\");\n\n    // TODO(arbrown) Implement OpenTelemetry tracing\n    \n    logger.info(\"Tracing enabled - Stackdriver exporter initialized.\");\n  }\n\n  /** Main launches the server from the command line. */\n  public static void main(String[] args) throws IOException, InterruptedException {\n\n    new Thread(\n            () -> {\n              initStats();\n              initTracing();\n            })\n        .start();\n\n    // Start the RPC server. You shouldn't see any output from gRPC before this.\n    logger.info(\"AdService starting.\");\n    final AdService service = AdService.getInstance();\n    service.start();\n    service.blockUntilShutdown();\n  }\n}"
+  },
+  {
+    "file": "src/emailservice/email_server.py",
+    "kind": "def",
+    "name": "start",
+    "start_line": 118,
+    "end_line": 138,
+    "score_hint": 8.0,
+    "text": "def start(dummy_mode):\n  server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),)\n  service = None\n  if dummy_mode:\n    service = DummyEmailService()\n  else:\n    raise Exception('non-dummy mode not implemented yet')\n\n  demo_pb2_grpc.add_EmailServiceServicer_to_server(service, server)\n  health_pb2_grpc.add_HealthServicer_to_server(service, server)\n\n  port = os.environ.get('PORT', \"8080\")\n  logger.info(\"listening on port: \"+port)\n  server.add_insecure_port('[::]:'+port)\n  server.start()\n  try:\n    while True:\n      time.sleep(3600)\n  except KeyboardInterrupt:\n    server.stop(0)"
+  },
+  {
+    "file": "src/currencyservice/server.js",
+    "kind": "function",
+    "name": "main",
+    "start_line": 182,
+    "end_line": 196,
+    "score_hint": 13.75,
+    "text": "function main () {\n  logger.info(`Starting gRPC server on port ${PORT}...`);\n  const server = new grpc.Server();\n  server.addService(shopProto.CurrencyService.service, {getSupportedCurrencies, convert});\n  server.addService(healthProto.Health.service, {check});\n\n  server.bindAsync(\n    `[::]:${PORT}`,\n    grpc.ServerCredentials.createInsecure(),\n    function() {\n      logger.info(`CurrencyService gRPC server started on port ${PORT}`);\n      server.start();\n    },\n   );\n}"
+  },
+  {
+    "file": "src/emailservice/email_server.py",
+    "kind": "class",
+    "name": "BaseEmailService",
+    "start_line": 52,
+    "end_line": 60,
+    "score_hint": 8.0,
+    "text": "class BaseEmailService(demo_pb2_grpc.EmailServiceServicer):\n  def Check(self, request, context):\n    return health_pb2.HealthCheckResponse(\n      status=health_pb2.HealthCheckResponse.SERVING)\n  \n  def Watch(self, request, context):\n    return health_pb2.HealthCheckResponse(\n      status=health_pb2.HealthCheckResponse.UNIMPLEMENTED)"
+  },
+  {
+    "file": "src/checkoutservice/main.go",
+    "kind": "func",
+    "name": "init",
+    "start_line": 52,
+    "end_line": 64,
+    "score_hint": 11.25,
+    "text": "func init() {\n\tlog = logrus.New()\n\tlog.Level = logrus.DebugLevel\n\tlog.Formatter = &logrus.JSONFormatter{\n\t\tFieldMap: logrus.FieldMap{\n\t\t\tlogrus.FieldKeyTime:  \"timestamp\",\n\t\t\tlogrus.FieldKeyLevel: \"severity\",\n\t\t\tlogrus.FieldKeyMsg:   \"message\",\n\t\t},\n\t\tTimestampFormat: time.RFC3339Nano,\n\t}\n\tlog.Out = os.Stdout\n}"
+  },
+  {
+    "file": "src/checkoutservice/main.go",
+    "kind": "func",
+    "name": "initStats",
+    "start_line": 150,
+    "end_line": 152,
+    "score_hint": 11.25,
+    "text": "func initStats() {\n\t//TODO(arbrown) Implement OpenTelemetry stats\n}"
+  },
+  {
+    "file": "src/checkoutservice/main.go",
+    "kind": "func",
+    "name": "initTracing",
+    "start_line": 154,
+    "end_line": 178,
+    "score_hint": 11.25,
+    "text": "func initTracing() {\n\tvar (\n\t\tcollectorAddr string\n\t\tcollectorConn *grpc.ClientConn\n\t)\n\n\tctx := context.Background()\n\tctx, cancel := context.WithTimeout(ctx, time.Second*3)\n\tdefer cancel()\n\n\tmustMapEnv(&collectorAddr, \"COLLECTOR_SERVICE_ADDR\")\n\tmustConnGRPC(ctx, &collectorConn, collectorAddr)\n\n\texporter, err := otlptracegrpc.New(\n\t\tctx,\n\t\totlptracegrpc.WithGRPCConn(collectorConn))\n\tif err != nil {\n\t\tlog.Warnf(\"warn: Failed to create trace exporter: %v\", err)\n\t}\n\ttp := sdktrace.NewTracerProvider(\n\t\tsdktrace.WithBatcher(exporter),\n\t\tsdktrace.WithSampler(sdktrace.AlwaysSample()))\n\totel.SetTracerProvider(tp)\n\n}"
+  },
+  {
+    "file": "src/checkoutservice/main.go",
+    "kind": "func",
+    "name": "initProfiling",
+    "start_line": 180,
+    "end_line": 200,
+    "score_hint": 11.25,
+    "text": "func initProfiling(service, version string) {\n\t// TODO(ahmetb) this method is duplicated in other microservices using Go\n\t// since they are not sharing packages.\n\tfor i := 1; i <= 3; i++ {\n\t\tif err := profiler.Start(profiler.Config{\n\t\t\tService:        service,\n\t\t\tServiceVersion: version,\n\t\t\t// ProjectID must be set if not running on GCP.\n\t\t\t// ProjectID: \"my-project\",\n\t\t}); err != nil {\n\t\t\tlog.Warnf(\"failed to start profiler: %+v\", err)\n\t\t} else {\n\t\t\tlog.Info(\"started Stackdriver profiler\")\n\t\t\treturn\n\t\t}\n\t\td := time.Second * 10 * time.Duration(i)\n\t\tlog.Infof(\"sleeping %v to retry initializing Stackdriver profiler\", d)\n\t\ttime.Sleep(d)\n\t}\n\tlog.Warn(\"could not initialize Stackdriver profiler after retrying, giving up\")\n}"
+  },
+  {
+    "file": "src/checkoutservice/main.go",
+    "kind": "func",
+    "name": "mustMapEnv",
+    "start_line": 202,
+    "end_line": 208,
+    "score_hint": 11.25,
+    "text": "func mustMapEnv(target *string, envKey string) {\n\tv := os.Getenv(envKey)\n\tif v == \"\" {\n\t\tpanic(fmt.Sprintf(\"environment variable %q not set\", envKey))\n\t}\n\t*target = v\n}"
+  },
+  {
+    "file": "src/checkoutservice/main.go",
+    "kind": "func",
+    "name": "mustConnGRPC",
+    "start_line": 210,
+    "end_line": 220,
+    "score_hint": 11.25,
+    "text": "func mustConnGRPC(ctx context.Context, conn **grpc.ClientConn, addr string) {\n\tvar err error\n\t_, cancel := context.WithTimeout(ctx, time.Second*3)\n\tdefer cancel()\n\t*conn, err = grpc.NewClient(addr,\n\t\tgrpc.WithTransportCredentials(insecure.NewCredentials()),\n\t\tgrpc.WithStatsHandler(otelgrpc.NewClientHandler()))\n\tif err != nil {\n\t\tpanic(errors.Wrapf(err, \"grpc: failed to connect %s\", addr))\n\t}\n}"
+  },
+  {
+    "file": "src/frontend/main.go",
+    "kind": "func",
+    "name": "initTracing",
+    "start_line": 177,
+    "end_line": 192,
+    "score_hint": 11.25,
+    "text": "func initTracing(log logrus.FieldLogger, ctx context.Context, svc *frontendServer) (*sdktrace.TracerProvider, error) {\n\tmustMapEnv(&svc.collectorAddr, \"COLLECTOR_SERVICE_ADDR\")\n\tmustConnGRPC(ctx, &svc.collectorConn, svc.collectorAddr)\n\texporter, err := otlptracegrpc.New(\n\t\tctx,\n\t\totlptracegrpc.WithGRPCConn(svc.collectorConn))\n\tif err != nil {\n\t\tlog.Warnf(\"warn: Failed to create trace exporter: %v\", err)\n\t}\n\ttp := sdktrace.NewTracerProvider(\n\t\tsdktrace.WithBatcher(exporter),\n\t\tsdktrace.WithSampler(sdktrace.AlwaysSample()))\n\totel.SetTracerProvider(tp)\n\n\treturn tp, err\n}"
+  },
+  {
+    "file": "src/frontend/main.go",
+    "kind": "func",
+    "name": "initProfiling",
+    "start_line": 194,
+    "end_line": 215,
+    "score_hint": 11.25,
+    "text": "func initProfiling(log logrus.FieldLogger, service, version string) {\n\t// TODO(ahmetb) this method is duplicated in other microservices using Go\n\t// since they are not sharing packages.\n\tfor i := 1; i <= 3; i++ {\n\t\tlog = log.WithField(\"retry\", i)\n\t\tif err := profiler.Start(profiler.Config{\n\t\t\tService:        service,\n\t\t\tServiceVersion: version,\n\t\t\t// ProjectID must be set if not running on GCP.\n\t\t\t// ProjectID: \"my-project\",\n\t\t}); err != nil {\n\t\t\tlog.Warnf(\"warn: failed to start profiler: %+v\", err)\n\t\t} else {\n\t\t\tlog.Info(\"started Stackdriver profiler\")\n\t\t\treturn\n\t\t}\n\t\td := time.Second * 10 * time.Duration(i)\n\t\tlog.Debugf(\"sleeping %v to retry initializing Stackdriver profiler\", d)\n\t\ttime.Sleep(d)\n\t}\n\tlog.Warn(\"warning: could not initialize Stackdriver profiler after retrying, giving up\")\n}"
+  },
+  {
+    "file": "src/frontend/main.go",
+    "kind": "func",
+    "name": "mustMapEnv",
+    "start_line": 217,
+    "end_line": 223,
+    "score_hint": 11.25,
+    "text": "func mustMapEnv(target *string, envKey string) {\n\tv := os.Getenv(envKey)\n\tif v == \"\" {\n\t\tpanic(fmt.Sprintf(\"environment variable %q not set\", envKey))\n\t}\n\t*target = v\n}"
+  },
+  {
+    "file": "src/frontend/main.go",
+    "kind": "func",
+    "name": "mustConnGRPC",
+    "start_line": 225,
+    "end_line": 235,
+    "score_hint": 11.25,
+    "text": "func mustConnGRPC(ctx context.Context, conn **grpc.ClientConn, addr string) {\n\tvar err error\n\t_, cancel := context.WithTimeout(ctx, time.Second*3)\n\tdefer cancel()\n\t*conn, err = grpc.NewClient(addr,\n\t\tgrpc.WithTransportCredentials(insecure.NewCredentials()),\n\t\tgrpc.WithStatsHandler(otelgrpc.NewClientHandler()))\n\tif err != nil {\n\t\tpanic(errors.Wrapf(err, \"grpc: failed to connect %s\", addr))\n\t}\n}"
+  },
+  {
+    "file": "src/paymentservice/logger.js",
+    "kind": "toplevel",
+    "name": "toplevel",
+    "start_line": 1,
+    "end_line": 27,
+    "score_hint": 3.25,
+    "text": "/*\n * Copyright 2023 Google LLC\n *\n * Licensed under the Apache License, Version 2.0 (the \"License\");\n * you may not use this file except in compliance with the License.\n * You may obtain a copy of the License at\n *\n *     https://www.apache.org/licenses/LICENSE-2.0\n *\n * Unless required by applicable law or agreed to in writing, software\n * distributed under the License is distributed on an \"AS IS\" BASIS,\n * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n * See the License for the specific language governing permissions and\n * limitations under the License.\n */\n\nconst pino = require('pino');\n\nmodule.exports = pino({\n  name: 'paymentservice-server',\n  messageKey: 'message',\n  formatters: {\n    level (logLevelString, logLevelNum) {\n      return { severity: logLevelString }\n    }\n  }\n});"
+  },
+  {
+    "file": "src/productcatalogservice/catalog_loader.go",
+    "kind": "func",
+    "name": "loadCatalog",
+    "start_line": 33,
+    "end_line": 42,
+    "score_hint": 3.25,
+    "text": "func loadCatalog(catalog *pb.ListProductsResponse) error {\n\tcatalogMutex.Lock()\n\tdefer catalogMutex.Unlock()\n\n\tif os.Getenv(\"ALLOYDB_CLUSTER_NAME\") != \"\" {\n\t\treturn loadCatalogFromAlloyDB(catalog)\n\t}\n\n\treturn loadCatalogFromLocalFile(catalog)\n}"
+  },
+  {
+    "file": "src/productcatalogservice/catalog_loader.go",
+    "kind": "func",
+    "name": "loadCatalogFromAlloyDB",
+    "start_line": 85,
+    "end_line": 161,
+    "score_hint": 3.25,
+    "text": "func loadCatalogFromAlloyDB(catalog *pb.ListProductsResponse) error {\n\tlog.Info(\"loading catalog from AlloyDB...\")\n\n\tprojectID := os.Getenv(\"PROJECT_ID\")\n\tregion := os.Getenv(\"REGION\")\n\tpgClusterName := os.Getenv(\"ALLOYDB_CLUSTER_NAME\")\n\tpgInstanceName := os.Getenv(\"ALLOYDB_INSTANCE_NAME\")\n\tpgDatabaseName := os.Getenv(\"ALLOYDB_DATABASE_NAME\")\n\tpgTableName := os.Getenv(\"ALLOYDB_TABLE_NAME\")\n\tpgSecretName := os.Getenv(\"ALLOYDB_SECRET_NAME\")\n\n\tpgPassword, err := getSecretPayload(projectID, pgSecretName, \"latest\")\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tdialer, err := alloydbconn.NewDialer(context.Background())\n\tif err != nil {\n\t\tlog.Warnf(\"failed to set-up dialer connection: %v\", err)\n\t\treturn err\n\t}\n\tcleanup := func() error { return dialer.Close() }\n\tdefer cleanup()\n\n\tdsn := fmt.Sprintf(\n\t\t\"user=%s password=%s dbname=%s sslmode=disable\",\n\t\t\"postgres\", pgPassword, pgDatabaseName,\n\t)\n\n\tconfig, err := pgxpool.ParseConfig(dsn)\n\tif err != nil {\n\t\tlog.Warnf(\"failed to parse DSN config: %v\", err)\n\t\treturn err\n\t}\n\n\tpgInstanceURI := fmt.Sprintf(\"projects/%s/locations/%s/clusters/%s/instances/%s\", projectID, region, pgClusterName, pgInstanceName)\n\tconfig.ConnConfig.DialFunc = func(ctx context.Context, _ string, _ string) (net.Conn, error) {\n\t\treturn dialer.Dial(ctx, pgInstanceURI)\n\t}\n\n\tpool, err := pgxpool.NewWithConfig(context.Background(), config)\n\tif err != nil {\n\t\tlog.Warnf(\"failed to set-up pgx pool: %v\", err)\n\t\treturn err\n\t}\n\tdefer pool.Close()\n\n\tquery := \"SELECT id, name, description, picture, price_usd_currency_code, price_usd_units, price_usd_nanos, categories FROM \" + pgTableName\n\trows, err := pool.Query(context.Background(), query)\n\tif err != nil {\n\t\tlog.Warnf(\"failed to query database: %v\", err)\n\t\treturn err\n\t}\n\tdefer rows.Close()\n\n\tcatalog.Products = catalog.Products[:0]\n\tfor rows.Next() {\n\t\tproduct := &pb.Product{}\n\t\tproduct.PriceUsd = &pb.Money{}\n\n\t\tvar categories string\n\t\terr = rows.Scan(&product.Id, &product.Name, &product.Description,\n\t\t\t&product.Picture, &product.PriceUsd.CurrencyCode, &product.PriceUsd.Units,\n\t\t\t&product.PriceUsd.Nanos, &categories)\n\t\tif err != nil {\n\t\t\tlog.Warnf(\"failed to scan query result row: %v\", err)\n\t\t\treturn err\n\t\t}\n\t\tcategories = strings.ToLower(categories)\n\t\tproduct.Categories = strings.Split(categories, \",\")\n\n\t\tcatalog.Products = append(catalog.Products, product)\n\t}\n\n\tlog.Info(\"successfully parsed product catalog from AlloyDB\")\n\treturn nil\n}"
+  },
+  {
+    "file": "src/frontend/rpc.go",
+    "kind": "toplevel",
+    "name": "toplevel",
+    "start_line": 1,
+    "end_line": 127,
+    "score_hint": 3.25,
+    "text": "// Copyright 2018 Google LLC\n//\n// Licensed under the Apache License, Version 2.0 (the \"License\");\n// you may not use this file except in compliance with the License.\n// You may obtain a copy of the License at\n//\n//      http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing, software\n// distributed under the License is distributed on an \"AS IS\" BASIS,\n// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n// See the License for the specific language governing permissions and\n// limitations under the License.\n\npackage main\n\nimport (\n\t\"context\"\n\t\"time\"\n\n\tpb \"github.com/GoogleCloudPlatform/microservices-demo/src/frontend/genproto\"\n\n\t\"github.com/pkg/errors\"\n)\n\nconst (\n\tavoidNoopCurrencyConversionRPC = false\n)\n\nfunc (fe *frontendServer) getCurrencies(ctx context.Context) ([]string, error) {\n\tcurrs, err := pb.NewCurrencyServiceClient(fe.currencySvcConn).\n\t\tGetSupportedCurrencies(ctx, &pb.Empty{})\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\tvar out []string\n\tfor _, c := range currs.CurrencyCodes {\n\t\tif _, ok := whitelistedCurrencies[c]; ok {\n\t\t\tout = append(out, c)\n\t\t}\n\t}\n\treturn out, nil\n}\n\nfunc (fe *frontendServer) getProducts(ctx context.Context) ([]*pb.Product, error) {\n\tresp, err := pb.NewProductCatalogServiceClient(fe.productCatalogSvcConn).\n\t\tListProducts(ctx, &pb.Empty{})\n\treturn resp.GetProducts(), err\n}\n\nfunc (fe *frontendServer) getProduct(ctx context.Context, id string) (*pb.Product, error) {\n\tresp, err := pb.NewProductCatalogServiceClient(fe.productCatalogSvcConn).\n\t\tGetProduct(ctx, &pb.GetProductRequest{Id: id})\n\treturn resp, err\n}\n\nfunc (fe *frontendServer) getCart(ctx context.Context, userID string) ([]*pb.CartItem, error) {\n\tresp, err := pb.NewCartServiceClient(fe.cartSvcConn).GetCart(ctx, &pb.GetCartRequest{UserId: userID})\n\treturn resp.GetItems(), err\n}\n\nfunc (fe *frontendServer) emptyCart(ctx context.Context, userID string) error {\n\t_, err := pb.NewCartServiceClient(fe.cartSvcConn).EmptyCart(ctx, &pb.EmptyCartRequest{UserId: userID})\n\treturn err\n}\n\nfunc (fe *frontendServer) insertCart(ctx context.Context, userID, productID string, quantity int32) error {\n\t_, err := pb.NewCartServiceClient(fe.cartSvcConn).AddItem(ctx, &pb.AddItemRequest{\n\t\tUserId: userID,\n\t\tItem: &pb.CartItem{\n\t\t\tProductId: productID,\n\t\t\tQuantity:  quantity},\n\t})\n\treturn err\n}\n\nfunc (fe *frontendServer) convertCurrency(ctx context.Context, money *pb.Money, currency string) (*pb.Money, error) {\n\tif avoidNoopCurrencyConversionRPC && money.GetCurrencyCode() == currency {\n\t\treturn money, nil\n\t}\n\treturn pb.NewCurrencyServiceClient(fe.currencySvcConn).\n\t\tConvert(ctx, &pb.CurrencyConversionRequest{\n\t\t\tFrom:   money,\n\t\t\tToCode: currency})\n}\n\nfunc (fe *frontendServer) getShippingQuote(ctx context.Context, items []*pb.CartItem, currency string) (*pb.Money, error) {\n\tquote, err := pb.NewShippingServiceClient(fe.shippingSvcConn).GetQuote(ctx,\n\t\t&pb.GetQuoteRequest{\n\t\t\tAddress: nil,\n\t\t\tItems:   items})\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\tlocalized, err := fe.convertCurrency(ctx, quote.GetCostUsd(), currency)\n\treturn localized, errors.Wrap(err, \"failed to convert currency for shipping cost\")\n}\n\nfunc (fe *frontendServer) getRecommendations(ctx context.Context, userID string, productIDs []string) ([]*pb.Product, error) {\n\tresp, err := pb.NewRecommendationServiceClient(fe.recommendationSvcConn).ListRecommendations(ctx,\n\t\t&pb.ListRecommendationsRequest{UserId: userID, ProductIds: productIDs})\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\tout := make([]*pb.Product, len(resp.GetProductIds()))\n\tfor i, v := range resp.GetProductIds() {\n\t\tp, err := fe.getProduct(ctx, v)\n\t\tif err != nil {\n\t\t\treturn nil, errors.Wrapf(err, \"failed to get recommended product info (#%s)\", v)\n\t\t}\n\t\tout[i] = p\n\t}\n\tif len(out) > 4 {\n\t\tout = out[:4] // take only first four to fit the UI\n\t}\n\treturn out, err\n}\n\nfunc (fe *frontendServer) getAd(ctx context.Context, ctxKeys []string) ([]*pb.Ad, error) {\n\tctx, cancel := context.WithTimeout(ctx, time.Millisecond*100)\n\tdefer cancel()\n\n\tresp, err := pb.NewAdServiceClient(fe.adSvcConn).GetAds(ctx, &pb.AdRequest{\n\t\tContextKeys: ctxKeys,\n\t})\n\treturn resp.GetAds(), errors.Wrap(err, \"failed to get ads\")\n}"
+  },
+  {
+    "file": "src/frontend/middleware.go",
+    "kind": "func",
+    "name": "ensureSessionID",
+    "start_line": 85,
+    "end_line": 111,
+    "score_hint": 3.25,
+    "text": "func ensureSessionID(next http.Handler) http.HandlerFunc {\n\treturn func(w http.ResponseWriter, r *http.Request) {\n\t\tvar sessionID string\n\t\tc, err := r.Cookie(cookieSessionID)\n\t\tif err == http.ErrNoCookie {\n\t\t\tif os.Getenv(\"ENABLE_SINGLE_SHARED_SESSION\") == \"true\" {\n\t\t\t\t// Hard coded user id, shared across sessions\n\t\t\t\tsessionID = \"12345678-1234-1234-1234-123456789123\"\n\t\t\t} else {\n\t\t\t\tu, _ := uuid.NewRandom()\n\t\t\t\tsessionID = u.String()\n\t\t\t}\n\t\t\thttp.SetCookie(w, &http.Cookie{\n\t\t\t\tName:   cookieSessionID,\n\t\t\t\tValue:  sessionID,\n\t\t\t\tMaxAge: cookieMaxAge,\n\t\t\t})\n\t\t} else if err != nil {\n\t\t\treturn\n\t\t} else {\n\t\t\tsessionID = c.Value\n\t\t}\n\t\tctx := context.WithValue(r.Context(), ctxKeySessionID{}, sessionID)\n\t\tr = r.WithContext(ctx)\n\t\tnext.ServeHTTP(w, r)\n\t}\n}"
+  },
+  {
+    "file": "src/frontend/deployment_details.go",
+    "kind": "func",
+    "name": "init",
+    "start_line": 15,
+    "end_line": 20,
+    "score_hint": 3.25,
+    "text": "func init() {\n\tinitializeLogger()\n\t// Use a goroutine to ensure loadDeploymentDetails()'s GCP API\n\t// calls don't block non-GCP deployments. See issue #685.\n\tgo loadDeploymentDetails()\n}"
+  },
+  {
+    "file": "src/frontend/deployment_details.go",
+    "kind": "func",
+    "name": "initializeLogger",
+    "start_line": 22,
+    "end_line": 34,
+    "score_hint": 3.25,
+    "text": "func initializeLogger() {\n\tlog = logrus.New()\n\tlog.Level = logrus.DebugLevel\n\tlog.Formatter = &logrus.JSONFormatter{\n\t\tFieldMap: logrus.FieldMap{\n\t\t\tlogrus.FieldKeyTime:  \"timestamp\",\n\t\t\tlogrus.FieldKeyLevel: \"severity\",\n\t\t\tlogrus.FieldKeyMsg:   \"message\",\n\t\t},\n\t\tTimestampFormat: time.RFC3339Nano,\n\t}\n\tlog.Out = os.Stdout\n}"
+  },
+  {
+    "file": "src/frontend/deployment_details.go",
+    "kind": "func",
+    "name": "loadDeploymentDetails",
+    "start_line": 36,
+    "end_line": 64,
+    "score_hint": 3.25,
+    "text": "func loadDeploymentDetails() {\n\tdeploymentDetailsMap = make(map[string]string)\n\tvar metaServerClient = metadata.NewClient(&http.Client{})\n\n\tpodHostname, err := os.Hostname()\n\tif err != nil {\n\t\tlog.Error(\"Failed to fetch the hostname for the Pod\", err)\n\t}\n\n\tpodCluster, err := metaServerClient.InstanceAttributeValue(\"cluster-name\")\n\tif err != nil {\n\t\tlog.Error(\"Failed to fetch the name of the cluster in which the pod is running\", err)\n\t}\n\n\tpodZone, err := metaServerClient.Zone()\n\tif err != nil {\n\t\tlog.Error(\"Failed to fetch the Zone of the node where the pod is scheduled\", err)\n\t}\n\n\tdeploymentDetailsMap[\"HOSTNAME\"] = podHostname\n\tdeploymentDetailsMap[\"CLUSTERNAME\"] = podCluster\n\tdeploymentDetailsMap[\"ZONE\"] = podZone\n\n\tlog.WithFields(logrus.Fields{\n\t\t\"cluster\":  podCluster,\n\t\t\"zone\":     podZone,\n\t\t\"hostname\": podHostname,\n\t}).Debug(\"Loaded deployment details\")\n}"
+  },
+  {
+    "file": "src/frontend/handlers.go",
+    "kind": "func",
+    "name": "cartIDs",
+    "start_line": 589,
+    "end_line": 595,
+    "score_hint": 3.25,
+    "text": "func cartIDs(c []*pb.CartItem) []string {\n\tout := make([]string, len(c))\n\tfor i, v := range c {\n\t\tout[i] = v.GetProductId()\n\t}\n\treturn out\n}"
+  },
+  {
+    "file": "src/frontend/handlers.go",
+    "kind": "func",
+    "name": "cartSize",
+    "start_line": 598,
+    "end_line": 604,
+    "score_hint": 3.25,
+    "text": "func cartSize(c []*pb.CartItem) int {\n\tcartSize := 0\n\tfor _, item := range c {\n\t\tcartSize += int(item.GetQuantity())\n\t}\n\treturn cartSize\n}"
+  },
+  {
+    "file": "src/frontend/handlers.go",
+    "kind": "func",
+    "name": "renderHTTPError",
+    "start_line": 536,
+    "end_line": 549,
+    "score_hint": 3.25,
+    "text": "func renderHTTPError(log logrus.FieldLogger, r *http.Request, w http.ResponseWriter, err error, code int) {\n\tlog.WithField(\"error\", err).Error(\"request error\")\n\terrMsg := fmt.Sprintf(\"%+v\", err)\n\n\tw.WriteHeader(code)\n\n\tif templateErr := templates.ExecuteTemplate(w, \"error\", injectCommonTemplateData(r, map[string]interface{}{\n\t\t\"error\":       errMsg,\n\t\t\"status_code\": code,\n\t\t\"status\":      http.StatusText(code),\n\t})); templateErr != nil {\n\t\tlog.Println(templateErr)\n\t}\n}"
+  },
+  {
+    "file": "src/frontend/handlers.go",
+    "kind": "func",
+    "name": "injectCommonTemplateData",
+    "start_line": 551,
+    "end_line": 571,
+    "score_hint": 3.25,
+    "text": "func injectCommonTemplateData(r *http.Request, payload map[string]interface{}) map[string]interface{} {\n\tdata := map[string]interface{}{\n\t\t\"session_id\":        sessionID(r),\n\t\t\"request_id\":        r.Context().Value(ctxKeyRequestID{}),\n\t\t\"user_currency\":     currentCurrency(r),\n\t\t\"platform_css\":      plat.css,\n\t\t\"platform_name\":     plat.provider,\n\t\t\"is_cymbal_brand\":   isCymbalBrand,\n\t\t\"assistant_enabled\": assistantEnabled,\n\t\t\"deploymentDetails\": deploymentDetailsMap,\n\t\t\"frontendMessage\":   frontendMessage,\n\t\t\"currentYear\":       time.Now().Year(),\n\t\t\"baseUrl\":           baseUrl,\n\t}\n\n\tfor k, v := range payload {\n\t\tdata[k] = v\n\t}\n\n\treturn data\n}"
+  },
+  {
+    "file": "src/frontend/handlers.go",
+    "kind": "func",
+    "name": "currentCurrency",
+    "start_line": 573,
+    "end_line": 579,
+    "score_hint": 3.25,
+    "text": "func currentCurrency(r *http.Request) string {\n\tc, _ := r.Cookie(cookieCurrency)\n\tif c != nil {\n\t\treturn c.Value\n\t}\n\treturn defaultCurrency\n}"
+  },
+  {
+    "file": "src/frontend/handlers.go",
+    "kind": "func",
+    "name": "sessionID",
+    "start_line": 581,
+    "end_line": 587,
+    "score_hint": 3.25,
+    "text": "func sessionID(r *http.Request) string {\n\tv := r.Context().Value(ctxKeySessionID{})\n\tif v != nil {\n\t\treturn v.(string)\n\t}\n\treturn \"\"\n}"
+  },
+  {
+    "file": "src/frontend/handlers.go",
+    "kind": "func",
+    "name": "renderMoney",
+    "start_line": 606,
+    "end_line": 609,
+    "score_hint": 3.25,
+    "text": "func renderMoney(money pb.Money) string {\n\tcurrencyLogo := renderCurrencyLogo(money.GetCurrencyCode())\n\treturn fmt.Sprintf(\"%s%d.%02d\", currencyLogo, money.GetUnits(), money.GetNanos()/10000000)\n}"
+  },
+  {
+    "file": "src/frontend/handlers.go",
+    "kind": "func",
+    "name": "renderCurrencyLogo",
+    "start_line": 611,
+    "end_line": 626,
+    "score_hint": 3.25,
+    "text": "func renderCurrencyLogo(currencyCode string) string {\n\tlogos := map[string]string{\n\t\t\"USD\": \"$\",\n\t\t\"CAD\": \"$\",\n\t\t\"JPY\": \"¥\",\n\t\t\"EUR\": \"€\",\n\t\t\"TRY\": \"₺\",\n\t\t\"GBP\": \"£\",\n\t}\n\n\tlogo := \"$\" //default\n\tif val, ok := logos[currencyCode]; ok {\n\t\tlogo = val\n\t}\n\treturn logo\n}"
+  },
+  {
+    "file": "src/frontend/handlers.go",
+    "kind": "func",
+    "name": "stringinSlice",
+    "start_line": 628,
+    "end_line": 635,
+    "score_hint": 3.25,
+    "text": "func stringinSlice(slice []string, val string) bool {\n\tfor _, item := range slice {\n\t\tif item == val {\n\t\t\treturn true\n\t\t}\n\t}\n\treturn false\n}"
+  },
+  {
+    "file": "src/shoppingassistantservice/shoppingassistantservice.py",
+    "kind": "def",
+    "name": "create_app",
+    "start_line": 62,
+    "end_line": 116,
+    "score_hint": 4.75,
+    "text": "def create_app():\n    app = Flask(__name__)\n\n    @app.route(\"/\", methods=['POST'])\n    def talkToGemini():\n        print(\"Beginning RAG call\")\n        prompt = request.json['message']\n        prompt = unquote(prompt)\n\n        # Step 1 – Get a room description from Gemini-vision-pro\n        llm_vision = ChatGoogleGenerativeAI(model=\"gemini-1.5-flash\")\n        message = HumanMessage(\n            content=[\n                {\n                    \"type\": \"text\",\n                    \"text\": \"You are a professional interior designer, give me a detailed decsription of the style of the room in this image\",\n                },\n                {\"type\": \"image_url\", \"image_url\": request.json['image']},\n            ]\n        )\n        response = llm_vision.invoke([message])\n        print(\"Description step:\")\n        print(response)\n        description_response = response.content\n\n        # Step 2 – Similarity search with the description & user prompt\n        vector_search_prompt = f\"\"\" This is the user's request: {prompt} Find the most relevant items for that prompt, while matching style of the room described here: {description_response} \"\"\"\n        print(vector_search_prompt)\n\n        docs = vectorstore.similarity_search(vector_search_prompt)\n        print(f\"Vector search: {description_response}\")\n        print(f\"Retrieved documents: {len(docs)}\")\n        #Prepare relevant documents for inclusion in final prompt\n        relevant_docs = \"\"\n        for doc in docs:\n            doc_details = doc.to_json()\n            print(f\"Adding relevant document to prompt context: {doc_details}\")\n            relevant_docs += str(doc_details) + \", \"\n\n        # Step 3 – Tie it all together by augmenting our call to Gemini-pro\n        llm = ChatGoogleGenerativeAI(model=\"gemini-1.5-flash\")\n        design_prompt = (\n            f\" You are an interior designer that works for Online Boutique. You are tasked with providing recommendations to a customer on what they should add to a given room from our catalog. This is the description of the room: \\n\"\n            f\"{description_response} Here are a list of products that are relevant to it: {relevant_docs} Specifically, this is what the customer has asked for, see if you can accommodate it: {prompt} Start by repeating a brief description of the room's design to the customer, then provide your recommendations. Do your best to pick the most relevant item out of the list of products provided, but if none of them seem relevant, then say that instead of inventing a new product. At the end of the response, add a list of the IDs of the relevant products in the following format for the top 3 results: [<first product ID>], [<second product ID>], [<third product ID>] \")\n        print(\"Final design prompt: \")\n        print(design_prompt)\n        design_response = llm.invoke(\n            design_prompt\n        )\n\n        data = {'content': design_response.content}\n        return data\n\n    return app"
+  },
+  {
+    "file": "src/loadgenerator/locustfile.py",
+    "kind": "def",
+    "name": "logout",
+    "start_line": 74,
+    "end_line": 77,
+    "score_hint": 4.0,
+    "text": "def logout(l):\n    l.client.get('/logout')"
+  },
+  {
+    "file": "src/loadgenerator/locustfile.py",
+    "kind": "def",
+    "name": "setCurrency",
+    "start_line": 37,
+    "end_line": 41,
+    "score_hint": 4.0,
+    "text": "def setCurrency(l):\n    currencies = ['EUR', 'USD', 'JPY', 'CAD', 'GBP', 'TRY']\n    l.client.post(\"/setCurrency\",\n        {'currency_code': random.choice(currencies)})"
+  },
+  {
+    "file": "src/loadgenerator/locustfile.py",
+    "kind": "def",
+    "name": "viewCart",
+    "start_line": 45,
+    "end_line": 47,
+    "score_hint": 4.0,
+    "text": "def viewCart(l):\n    l.client.get(\"/cart\")"
+  },
+  {
+    "file": "src/loadgenerator/locustfile.py",
+    "kind": "def",
+    "name": "browseProduct",
+    "start_line": 42,
+    "end_line": 44,
+    "score_hint": 4.0,
+    "text": "def browseProduct(l):\n    l.client.get(\"/product/\" + random.choice(products))"
+  },
+  {
+    "file": "src/loadgenerator/locustfile.py",
+    "kind": "def",
+    "name": "addToCart",
+    "start_line": 48,
+    "end_line": 54,
+    "score_hint": 4.0,
+    "text": "def addToCart(l):\n    product = random.choice(products)\n    l.client.get(\"/product/\" + product)\n    l.client.post(\"/cart\", {\n        'product_id': product,\n        'quantity': random.randint(1,10)})"
+  },
+  {
+    "file": "src/loadgenerator/locustfile.py",
+    "kind": "def",
+    "name": "empty_cart",
+    "start_line": 55,
+    "end_line": 57,
+    "score_hint": 4.0,
+    "text": "def empty_cart(l):\n    l.client.post('/cart/empty')"
+  },
+  {
+    "file": "src/loadgenerator/locustfile.py",
+    "kind": "def",
+    "name": "checkout",
+    "start_line": 58,
+    "end_line": 73,
+    "score_hint": 4.0,
+    "text": "def checkout(l):\n    addToCart(l)\n    current_year = datetime.datetime.now().year+1\n    l.client.post(\"/cart/checkout\", {\n        'email': fake.email(),\n        'street_address': fake.street_address(),\n        'zip_code': fake.zipcode(),\n        'city': fake.city(),\n        'state': fake.state_abbr(),\n        'country': fake.country(),\n        'credit_card_number': fake.credit_card_number(card_type=\"visa\"),\n        'credit_card_expiration_month': random.randint(1, 12),\n        'credit_card_expiration_year': random.randint(current_year, current_year + 70),\n        'credit_card_cvv': f\"{random.randint(100, 999)}\",\n    })"
+  },
+  {
+    "file": "src/loadgenerator/locustfile.py",
+    "kind": "class",
+    "name": "UserBehavior",
+    "start_line": 78,
+    "end_line": 89,
+    "score_hint": 4.0,
+    "text": "class UserBehavior(TaskSet):\n\n    def on_start(self):\n        index(self)\n\n    tasks = {index: 1,\n        setCurrency: 2,\n        browseProduct: 10,\n        addToCart: 2,\n        viewCart: 3,\n        checkout: 1}"
+  },
+  {
+    "file": "src/loadgenerator/locustfile.py",
+    "kind": "class",
+    "name": "WebsiteUser",
+    "start_line": 90,
+    "end_line": 92,
+    "score_hint": 4.0,
+    "text": "class WebsiteUser(FastHttpUser):\n    tasks = [UserBehavior]\n    wait_time = between(1, 10)"
+  },
+  {
+    "file": "src/emailservice/email_server.py",
+    "kind": "class",
+    "name": "EmailService",
+    "start_line": 61,
+    "end_line": 107,
+    "score_hint": 8.0,
+    "text": "class EmailService(BaseEmailService):\n  def __init__(self):\n    raise Exception('cloud mail client not implemented')\n    super().__init__()\n\n  @staticmethod\n  def send_email(client, email_address, content):\n    response = client.send_message(\n      sender = client.sender_path(project_id, region, sender_id),\n      envelope_from_authority = '',\n      header_from_authority = '',\n      envelope_from_address = from_address,\n      simple_message = {\n        \"from\": {\n          \"address_spec\": from_address,\n        },\n        \"to\": [{\n          \"address_spec\": email_address\n        }],\n        \"subject\": \"Your Confirmation Email\",\n        \"html_body\": content\n      }\n    )\n    logger.info(\"Message sent: {}\".format(response.rfc822_message_id))\n\n  def SendOrderConfirmation(self, request, context):\n    email = request.email\n    order = request.order\n\n    try:\n      confirmation = template.render(order = order)\n    except TemplateError as err:\n      context.set_details(\"An error occurred when preparing the confirmation mail.\")\n      logger.error(err.message)\n      context.set_code(grpc.StatusCode.INTERNAL)\n      return demo_pb2.Empty()\n\n    try:\n      EmailService.send_email(self.client, email, confirmation)\n    except GoogleAPICallError as err:\n      context.set_details(\"An error occurred when sending the email.\")\n      print(err.message)\n      context.set_code(grpc.StatusCode.INTERNAL)\n      return demo_pb2.Empty()\n\n    return demo_pb2.Empty()"
+  },
+  {
+    "file": "src/emailservice/email_server.py",
+    "kind": "class",
+    "name": "DummyEmailService",
+    "start_line": 108,
+    "end_line": 112,
+    "score_hint": 8.0,
+    "text": "class DummyEmailService(BaseEmailService):\n  def SendOrderConfirmation(self, request, context):\n    logger.info('A request to send order confirmation email to {} has been received.'.format(request.email))\n    return demo_pb2.Empty()"
+  },
+  {
+    "file": "src/paymentservice/charge.js",
+    "kind": "class",
+    "name": "CreditCardError",
+    "start_line": 30,
+    "end_line": 35,
+    "score_hint": 3.75,
+    "text": "class CreditCardError extends Error {\n  constructor (message) {\n    super(message);\n    this.code = 400; // Invalid argument error\n  }\n}"
+  },
+  {
+    "file": "src/paymentservice/charge.js",
+    "kind": "function",
+    "name": "charge",
+    "start_line": 61,
+    "end_line": 86,
+    "score_hint": 3.75,
+    "text": "module.exports = function charge (request) {\n  const { amount, credit_card: creditCard } = request;\n  const cardNumber = creditCard.credit_card_number;\n  const cardInfo = cardValidator(cardNumber);\n  const {\n    card_type: cardType,\n    valid\n  } = cardInfo.getCardDetails();\n\n  if (!valid) { throw new InvalidCreditCard(); }\n\n  // Only VISA and mastercard is accepted, other card types (AMEX, dinersclub) will\n  // throw UnacceptedCreditCard error.\n  if (!(cardType === 'visa' || cardType === 'mastercard')) { throw new UnacceptedCreditCard(cardType); }\n\n  // Also validate expiration is > today.\n  const currentMonth = new Date().getMonth() + 1;\n  const currentYear = new Date().getFullYear();\n  const { credit_card_expiration_year: year, credit_card_expiration_month: month } = creditCard;\n  if ((currentYear * 12 + currentMonth) > (year * 12 + month)) { throw new ExpiredCreditCard(cardNumber.replace('-', ''), month, year); }\n\n  logger.info(`Transaction processed: ${cardType} ending ${cardNumber.substr(-4)} \\\n    Amount: ${amount.currency_code}${amount.units}.${amount.nanos}`);\n\n  return { transaction_id: uuidv4() };\n};"
+  },
+  {
+    "file": "src/emailservice/email_client.py",
+    "kind": "def",
+    "name": "send_confirmation_email",
+    "start_line": 25,
+    "end_line": 37,
+    "score_hint": 4.0,
+    "text": "def send_confirmation_email(email, order):\n  channel = grpc.insecure_channel('[::]:8080')\n  stub = demo_pb2_grpc.EmailServiceStub(channel)\n  try:\n    response = stub.SendOrderConfirmation(demo_pb2.SendOrderConfirmationRequest(\n      email = email,\n      order = order\n    ))\n    logger.info('Request sent.')\n  except grpc.RpcError as err:\n    logger.error(err.details())\n    logger.error('{}, {}'.format(err.code().name, err.code().value))"
+  },
+  {
+    "file": "src/currencyservice/server.js",
+    "kind": "function",
+    "name": "that",
+    "start_line": 106,
+    "end_line": 112,
+    "score_hint": 13.75,
+    "text": "* Helper function that gets currency data from a stored JSON file\n * Uses public data from European Central Bank\n */\nfunction _getCurrencyData (callback) {\n  const data = require('./data/currency_conversion.json');\n  callback(data);\n}"
+  }
+]

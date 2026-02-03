@@ -1,0 +1,559 @@
+{
+  "architecture_type": "deployment",
+  "entry_points": [
+    "frontend-lb"
+  ],
+  "replication_assumptions": [
+    "Frontend is exposed via a Kubernetes Ingress resource as the global entry point with an HTTPS frontend using a managed certificate.",
+    "All microservices (currencyservice, paymentservice, checkoutservice, shippingservice, productcatalogservice, emailservice, recommendationservice, cartservice, adservice, shoppingassistantservice) run as multiple pods to support horizontal scaling typical in Kubernetes clusters, inferred from typical microservices design and no contrary evidence.",
+    "Loadgenerator acts as a worker/load test client running independently.",
+    "Shared state like databases are inferred where applicable especially for product catalog (AlloyDB/Postgres) and possibly others. No explicit cache or queue evidence found thus omitted.",
+    "Communication between services is primarily via gRPC calls as evidenced in multiple service implementations and frontend client code."
+  ],
+  "nodes": [
+    {
+      "id": "frontend-lb",
+      "type": "lb",
+      "replicas": 1,
+      "note": "Kubernetes Ingress resource acting as external HTTPS load balancer / reverse proxy for the frontend service using managed certificates.",
+      "inferred": false,
+      "style": {
+        "fillcolor": "#FFCC00",
+        "color": "#CC9900",
+        "shape": "box"
+      }
+    },
+    {
+      "id": "frontend",
+      "type": "service",
+      "replicas": 3,
+      "note": "Frontend service running HTTP server on port 80, serving user-facing web frontend, connects to backend microservices via gRPC.",
+      "inferred": true,
+      "style": {
+        "fillcolor": "#3366CC",
+        "color": "#204080",
+        "shape": "box"
+      }
+    },
+    {
+      "id": "currencyservice",
+      "type": "service",
+      "replicas": 3,
+      "note": "Currency service providing currency conversion and supported currencies via gRPC on port 7000.",
+      "inferred": true,
+      "style": {
+        "fillcolor": "#33CCCC",
+        "color": "#208080",
+        "shape": "box"
+      }
+    },
+    {
+      "id": "productcatalogservice",
+      "type": "service",
+      "replicas": 3,
+      "note": "Product catalog service providing product data via gRPC. Loads product catalog from AlloyDB (Postgres) if configured, else local file.",
+      "inferred": true,
+      "style": {
+        "fillcolor": "#FF9933",
+        "color": "#CC6600",
+        "shape": "box"
+      }
+    },
+    {
+      "id": "checkoutservice",
+      "type": "service",
+      "replicas": 3,
+      "note": "Checkout service orchestrates order placement, connects to multiple backend services via gRPC. Runs on port 5050.",
+      "inferred": true,
+      "style": {
+        "fillcolor": "#FF6666",
+        "color": "#CC3333",
+        "shape": "box"
+      }
+    },
+    {
+      "id": "cartservice",
+      "type": "service",
+      "replicas": 3,
+      "note": "Cart service handles user's cart items and cart operations via gRPC, typical microservice setup.",
+      "inferred": true,
+      "style": {
+        "fillcolor": "#9966CC",
+        "color": "#663399",
+        "shape": "box"
+      }
+    },
+    {
+      "id": "paymentservice",
+      "type": "service",
+      "replicas": 3,
+      "note": "Payment service handles payment processing via gRPC on port 50051.",
+      "inferred": true,
+      "style": {
+        "fillcolor": "#FF6699",
+        "color": "#CC3366",
+        "shape": "box"
+      }
+    },
+    {
+      "id": "shippingservice",
+      "type": "service",
+      "replicas": 3,
+      "note": "Shipping service provides shipping quote and logistics via gRPC on port 50051.",
+      "inferred": true,
+      "style": {
+        "fillcolor": "#66CC99",
+        "color": "#339966",
+        "shape": "box"
+      }
+    },
+    {
+      "id": "emailservice",
+      "type": "service",
+      "replicas": 3,
+      "note": "Email service processes and sends order confirmation emails via gRPC on port 8080.",
+      "inferred": true,
+      "style": {
+        "fillcolor": "#9999FF",
+        "color": "#6666CC",
+        "shape": "box"
+      }
+    },
+    {
+      "id": "recommendationservice",
+      "type": "service",
+      "replicas": 3,
+      "note": "Recommendation service provides product recommendations via HTTP REST on port 8080.",
+      "inferred": true,
+      "style": {
+        "fillcolor": "#66CCFF",
+        "color": "#3399FF",
+        "shape": "box"
+      }
+    },
+    {
+      "id": "adservice",
+      "type": "service",
+      "replicas": 3,
+      "note": "Ad service serves ads to frontend via gRPC on port 9555.",
+      "inferred": true,
+      "style": {
+        "fillcolor": "#FF9966",
+        "color": "#CC6633",
+        "shape": "box"
+      }
+    },
+    {
+      "id": "shoppingassistantservice",
+      "type": "service",
+      "replicas": 3,
+      "note": "Shopping assistant service provides AI/chatbot assistance via HTTP REST on port 8080.",
+      "inferred": true,
+      "style": {
+        "fillcolor": "#66CC66",
+        "color": "#339933",
+        "shape": "box"
+      }
+    },
+    {
+      "id": "productcatalog-db",
+      "type": "db",
+      "replicas": 1,
+      "note": "AlloyDB / PostgreSQL database storing product catalog data, used by productcatalogservice. Inferred from productcatalogservice's 'loadCatalogFromAlloyDB' function.",
+      "inferred": false,
+      "style": {
+        "fillcolor": "#D2691E",
+        "color": "#A0522D",
+        "shape": "cylinder"
+      }
+    },
+    {
+      "id": "shared-session-store",
+      "type": "db",
+      "replicas": 1,
+      "note": "Shared state store for session management inferred due to session ID cookie handling indicating a shared or sticky session system, exact backend not explicit.",
+      "inferred": true,
+      "style": {
+        "fillcolor": "#A9A9A9",
+        "color": "#696969",
+        "shape": "cylinder"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "frontend-lb",
+      "to": "frontend",
+      "label": "http_https",
+      "evidence": [
+        {
+          "file": ".github/release-cluster/frontend-ingress.yaml",
+          "range": "1-38"
+        }
+      ],
+      "flow_step": 1,
+      "style": {
+        "color": "#FF9900",
+        "penwidth": 3,
+        "style": "solid"
+      }
+    },
+    {
+      "from": "frontend",
+      "to": "currencyservice",
+      "label": "grpc",
+      "evidence": [
+        {
+          "file": "src/frontend/rpc.go",
+          "range": "1-127"
+        }
+      ],
+      "flow_step": 2,
+      "style": {
+        "color": "#3366CC",
+        "penwidth": 2,
+        "style": "solid"
+      }
+    },
+    {
+      "from": "frontend",
+      "to": "productcatalogservice",
+      "label": "grpc",
+      "evidence": [
+        {
+          "file": "src/frontend/rpc.go",
+          "range": "1-127"
+        }
+      ],
+      "flow_step": 2,
+      "style": {
+        "color": "#FF9933",
+        "penwidth": 2,
+        "style": "solid"
+      }
+    },
+    {
+      "from": "frontend",
+      "to": "cartservice",
+      "label": "grpc",
+      "evidence": [
+        {
+          "file": "src/frontend/rpc.go",
+          "range": "1-127"
+        }
+      ],
+      "flow_step": 2,
+      "style": {
+        "color": "#9966CC",
+        "penwidth": 2,
+        "style": "solid"
+      }
+    },
+    {
+      "from": "frontend",
+      "to": "recommendationservice",
+      "label": "grpc",
+      "evidence": [
+        {
+          "file": "src/frontend/rpc.go",
+          "range": "1-127"
+        }
+      ],
+      "flow_step": 2,
+      "style": {
+        "color": "#66CCFF",
+        "penwidth": 2,
+        "style": "solid"
+      }
+    },
+    {
+      "from": "frontend",
+      "to": "shippingservice",
+      "label": "grpc",
+      "evidence": [
+        {
+          "file": "src/frontend/rpc.go",
+          "range": "1-127"
+        }
+      ],
+      "flow_step": 2,
+      "style": {
+        "color": "#66CC99",
+        "penwidth": 2,
+        "style": "solid"
+      }
+    },
+    {
+      "from": "frontend",
+      "to": "checkoutservice",
+      "label": "grpc",
+      "evidence": [
+        {
+          "file": "src/frontend/rpc.go",
+          "range": "1-127"
+        }
+      ],
+      "flow_step": 2,
+      "style": {
+        "color": "#FF6666",
+        "penwidth": 2,
+        "style": "solid"
+      }
+    },
+    {
+      "from": "frontend",
+      "to": "adservice",
+      "label": "grpc",
+      "evidence": [
+        {
+          "file": "src/frontend/rpc.go",
+          "range": "1-127"
+        }
+      ],
+      "flow_step": 2,
+      "style": {
+        "color": "#FF9966",
+        "penwidth": 2,
+        "style": "solid"
+      }
+    },
+    {
+      "from": "frontend",
+      "to": "shoppingassistantservice",
+      "label": "http_rest",
+      "evidence": [
+        {
+          "file": "src/shoppingassistantservice/shoppingassistantservice.py",
+          "range": "62-116"
+        }
+      ],
+      "flow_step": 2,
+      "style": {
+        "color": "#66CC66",
+        "penwidth": 2,
+        "style": "solid"
+      }
+    },
+    {
+      "from": "checkoutservice",
+      "to": "shippingservice",
+      "label": "grpc",
+      "evidence": [
+        {
+          "file": "src/checkoutservice/main.go",
+          "range": "88-148"
+        }
+      ],
+      "flow_step": 3,
+      "style": {
+        "color": "#66CC99",
+        "penwidth": 1,
+        "style": "dashed"
+      }
+    },
+    {
+      "from": "checkoutservice",
+      "to": "productcatalogservice",
+      "label": "grpc",
+      "evidence": [
+        {
+          "file": "src/checkoutservice/main.go",
+          "range": "88-148"
+        }
+      ],
+      "flow_step": 3,
+      "style": {
+        "color": "#FF9933",
+        "penwidth": 1,
+        "style": "dashed"
+      }
+    },
+    {
+      "from": "checkoutservice",
+      "to": "cartservice",
+      "label": "grpc",
+      "evidence": [
+        {
+          "file": "src/checkoutservice/main.go",
+          "range": "88-148"
+        }
+      ],
+      "flow_step": 3,
+      "style": {
+        "color": "#9966CC",
+        "penwidth": 1,
+        "style": "dashed"
+      }
+    },
+    {
+      "from": "checkoutservice",
+      "to": "currencyservice",
+      "label": "grpc",
+      "evidence": [
+        {
+          "file": "src/checkoutservice/main.go",
+          "range": "88-148"
+        }
+      ],
+      "flow_step": 3,
+      "style": {
+        "color": "#33CCCC",
+        "penwidth": 1,
+        "style": "dashed"
+      }
+    },
+    {
+      "from": "checkoutservice",
+      "to": "emailservice",
+      "label": "grpc",
+      "evidence": [
+        {
+          "file": "src/checkoutservice/main.go",
+          "range": "88-148"
+        }
+      ],
+      "flow_step": 3,
+      "style": {
+        "color": "#9999FF",
+        "penwidth": 1,
+        "style": "dashed"
+      }
+    },
+    {
+      "from": "checkoutservice",
+      "to": "paymentservice",
+      "label": "grpc",
+      "evidence": [
+        {
+          "file": "src/checkoutservice/main.go",
+          "range": "88-148"
+        }
+      ],
+      "flow_step": 3,
+      "style": {
+        "color": "#FF6699",
+        "penwidth": 1,
+        "style": "dashed"
+      }
+    },
+    {
+      "from": "paymentservice",
+      "to": "external-payment-gateway",
+      "label": "external",
+      "evidence": [
+        {
+          "file": "src/paymentservice/charge.js",
+          "range": "30-86"
+        }
+      ],
+      "flow_step": 4,
+      "style": {
+        "color": "#CC0000",
+        "penwidth": 1,
+        "style": "dotted"
+      }
+    },
+    {
+      "from": "productcatalogservice",
+      "to": "productcatalog-db",
+      "label": "db",
+      "evidence": [
+        {
+          "file": "src/productcatalogservice/catalog_loader.go",
+          "range": "85-161"
+        }
+      ],
+      "flow_step": 3,
+      "style": {
+        "color": "#964B00",
+        "penwidth": 3,
+        "style": "solid"
+      }
+    },
+    {
+      "from": "frontend",
+      "to": "shared-session-store",
+      "label": "likely http or cache",
+      "evidence": [
+        {
+          "file": "src/frontend/middleware.go",
+          "range": "85-111"
+        }
+      ],
+      "flow_step": 1,
+      "style": {
+        "color": "#888888",
+        "penwidth": 1,
+        "style": "dashed"
+      }
+    },
+    {
+      "from": "loadgenerator",
+      "to": "frontend-lb",
+      "label": "http",
+      "evidence": [
+        {
+          "file": "src/loadgenerator/Dockerfile",
+          "range": "1-49"
+        }
+      ],
+      "flow_step": 0,
+      "style": {
+        "color": "#FF3366",
+        "penwidth": 2,
+        "style": "dotted"
+      }
+    }
+  ],
+  "overall_architecture_type": {
+    "architecture_type": "microservices",
+    "confidence": 95,
+    "rationale": "The repository contains multiple distinct services each with their own Dockerfile and separate source directories, indicating independently deployable components. The presence of gRPC server implementations for individual services (paymentservice, checkoutservice, shippingservice, adservice, emailservice, etc.) and service-to-service RPC calls in the frontend confirm a service-oriented design with decoupled service boundaries typical of microservices.",
+    "signals": [
+      "Multiple service-specific directories and entry points (e.g., src/paymentservice, src/checkoutservice, src/shippingservice)",
+      "Each service has its own Dockerfile, enabling independent deployment",
+      "gRPC servers implemented per service indicating RPC communication",
+      "Frontend connects to microservices via gRPC clients",
+      "Kubernetes manifests and ingress/service configurations for multiple services"
+    ],
+    "evidence": [
+      {
+        "file": "skaffold.yaml",
+        "range": "14-62"
+      },
+      {
+        "file": "src/paymentservice/server.js",
+        "range": "23-102"
+      },
+      {
+        "file": "src/checkoutservice/main.go",
+        "range": "88-148"
+      },
+      {
+        "file": "src/frontend/main.go",
+        "range": "91-172"
+      },
+      {
+        "file": "src/adservice/Dockerfile",
+        "range": "1-41"
+      },
+      {
+        "file": "src/emailservice/email_server.py",
+        "range": "118-138"
+      },
+      {
+        "file": "src/shippingservice/main.go",
+        "range": "56-102"
+      },
+      {
+        "file": "src/frontend/rpc.go",
+        "range": "1-127"
+      },
+      {
+        "file": ".github/release-cluster/frontend-service.yaml",
+        "range": "1-29"
+      }
+    ]
+  },
+  "project_name": "LLM_DEPLOYMENT_GRAPH"
+}

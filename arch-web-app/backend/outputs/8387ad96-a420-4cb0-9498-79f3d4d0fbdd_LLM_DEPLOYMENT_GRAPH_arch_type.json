@@ -1,0 +1,50 @@
+{
+  "architecture_type": "microservices",
+  "confidence": 95,
+  "rationale": "The repository contains multiple distinct services each with their own Dockerfile and separate source directories, indicating independently deployable components. The presence of gRPC server implementations for individual services (paymentservice, checkoutservice, shippingservice, adservice, emailservice, etc.) and service-to-service RPC calls in the frontend confirm a service-oriented design with decoupled service boundaries typical of microservices.",
+  "signals": [
+    "Multiple service-specific directories and entry points (e.g., src/paymentservice, src/checkoutservice, src/shippingservice)",
+    "Each service has its own Dockerfile, enabling independent deployment",
+    "gRPC servers implemented per service indicating RPC communication",
+    "Frontend connects to microservices via gRPC clients",
+    "Kubernetes manifests and ingress/service configurations for multiple services"
+  ],
+  "evidence": [
+    {
+      "file": "skaffold.yaml",
+      "range": "14-62"
+    },
+    {
+      "file": "src/paymentservice/server.js",
+      "range": "23-102"
+    },
+    {
+      "file": "src/checkoutservice/main.go",
+      "range": "88-148"
+    },
+    {
+      "file": "src/frontend/main.go",
+      "range": "91-172"
+    },
+    {
+      "file": "src/adservice/Dockerfile",
+      "range": "1-41"
+    },
+    {
+      "file": "src/emailservice/email_server.py",
+      "range": "118-138"
+    },
+    {
+      "file": "src/shippingservice/main.go",
+      "range": "56-102"
+    },
+    {
+      "file": "src/frontend/rpc.go",
+      "range": "1-127"
+    },
+    {
+      "file": ".github/release-cluster/frontend-service.yaml",
+      "range": "1-29"
+    }
+  ]
+}
